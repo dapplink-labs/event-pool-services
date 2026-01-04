@@ -1,0 +1,170 @@
+{
+  "title": "2026 FIFA 世界杯完整预测",
+  "description": "预测2026年FIFA世界杯的各个阶段结果，包括小组赛、淘汰赛、冠军等",
+  "image_url": "https://example.com/images/world-cup-2026.jpg",
+  "start_date": 1735689600,
+  "end_date": 1752019200,
+  "tags": ["体育", "足球", "世界杯", "FIFA", "2026"],
+  "sub_events": [
+    {
+      "question": "哪支球队将获得2026年世界杯冠军？",
+      "outcomes": [
+        {
+          "name": "巴西",
+          "color": "#009C3B",
+          "idx": 0
+        },
+        {
+          "name": "阿根廷",
+          "color": "#75AADB",
+          "idx": 1
+        },
+        {
+          "name": "法国",
+          "color": "#0055A4",
+          "idx": 2
+        },
+        {
+          "name": "德国",
+          "color": "#000000",
+          "idx": 3
+        },
+        {
+          "name": "西班牙",
+          "color": "#C60B1E",
+          "idx": 4
+        },
+        {
+          "name": "英格兰",
+          "color": "#CF142B",
+          "idx": 5
+        },
+        {
+          "name": "其他队伍",
+          "color": "#808080",
+          "idx": 6
+        }
+      ]
+    },
+    {
+      "question": "谁将获得金靴奖（最佳射手）？",
+      "outcomes": [
+        {
+          "name": "姆巴佩（法国）",
+          "color": "#0055A4",
+          "idx": 0
+        },
+        {
+          "name": "哈兰德（挪威）",
+          "color": "#BA0C2F",
+          "idx": 1
+        },
+        {
+          "name": "维尼修斯（巴西）",
+          "color": "#009C3B",
+          "idx": 2
+        },
+        {
+          "name": "凯恩（英格兰）",
+          "color": "#CF142B",
+          "idx": 3
+        },
+        {
+          "name": "其他球员",
+          "color": "#808080",
+          "idx": 4
+        }
+      ]
+    },
+    {
+      "question": "A组第一名将是？",
+      "outcomes": [
+        {
+          "name": "美国",
+          "color": "#B22234",
+          "idx": 0
+        },
+        {
+          "name": "墨西哥",
+          "color": "#006847",
+          "idx": 1
+        },
+        {
+          "name": "乌拉圭",
+          "color": "#0038A8",
+          "idx": 2
+        },
+        {
+          "name": "威尔士",
+          "color": "#00AB66",
+          "idx": 3
+        }
+      ]
+    },
+    {
+      "question": "决赛总进球数会是多少？",
+      "outcomes": [
+        {
+          "name": "0-1球",
+          "color": "#FF6B6B",
+          "idx": 0
+        },
+        {
+          "name": "2球",
+          "color": "#FFA500",
+          "idx": 1
+        },
+        {
+          "name": "3球",
+          "color": "#FFD700",
+          "idx": 2
+        },
+        {
+          "name": "4球或以上",
+          "color": "#32CD32",
+          "idx": 3
+        }
+      ]
+    },
+    {
+      "question": "是否会有点球大战决出冠军？",
+      "outcomes": [
+        {
+          "name": "是",
+          "color": "#FF4500",
+          "idx": 0
+        },
+        {
+          "name": "否",
+          "color": "#32CD32",
+          "idx": 1
+        }
+      ]
+    },
+    {
+      "question": "南美洲球队能否进入四强？",
+      "outcomes": [
+        {
+          "name": "0支",
+          "color": "#DC143C",
+          "idx": 0
+        },
+        {
+          "name": "1支",
+          "color": "#FF8C00",
+          "idx": 1
+        },
+        {
+          "name": "2支",
+          "color": "#FFD700",
+          "idx": 2
+        },
+        {
+          "name": "3支或以上",
+          "color": "#32CD32",
+          "idx": 3
+        }
+      ]
+    }
+  ]
+}

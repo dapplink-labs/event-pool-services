@@ -1,0 +1,64 @@
+# Binaries for programs and plugins
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+event-services
+event-pod-services
+
+# Test binary, built with `go test -c`
+*.test
+
+# Output of the go coverage tool
+*.out
+coverage.txt
+
+# Dependency directories (remove the comment below to include it)
+vendor/
+
+# Go workspace file
+go.work
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+.DS_Store
+.claude/
+
+# Configuration files (keep examples)
+config.yaml
+config.local.yaml
+*.local.yaml
+*.env
+.env
+
+# Logs
+*.log
+logs/
+tmp/
+
+# Database
+*.db
+*.sqlite
+*.sqlite3
+
+# OS
+Thumbs.db
+.DS_Store
+
+# Build artifacts
+dist/
+build/
+bin/
+
+# Generated proto files (optional - uncomment if you want to regenerate them each time)
+# proto/**/*.pb.go
+# proto/**/*_grpc.pb.go
+
+# Temporary files
+*.tmp
+.cache/

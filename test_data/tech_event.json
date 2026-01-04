@@ -1,0 +1,155 @@
+{
+  "title": "2025年科技行业重大事件预测",
+  "description": "预测2025年科技行业的重大发展和突破，包括AI、加密货币、科技公司等",
+  "image_url": "https://example.com/images/tech-2025.jpg",
+  "start_date": 1704067200,
+  "end_date": 1767139200,
+  "tags": ["科技", "AI", "加密货币", "区块链", "人工智能", "2025"],
+  "sub_events": [
+    {
+      "question": "OpenAI GPT-5 是否会在2025年发布？",
+      "outcomes": [
+        {
+          "name": "是，且性能大幅提升",
+          "color": "#00FF00",
+          "idx": 0
+        },
+        {
+          "name": "是，但提升有限",
+          "color": "#90EE90",
+          "idx": 1
+        },
+        {
+          "name": "否",
+          "color": "#FF6B6B",
+          "idx": 2
+        }
+      ]
+    },
+    {
+      "question": "比特币价格在2025年底会达到多少？",
+      "outcomes": [
+        {
+          "name": "低于50,000美元",
+          "color": "#DC143C",
+          "idx": 0
+        },
+        {
+          "name": "50,000-100,000美元",
+          "color": "#FF8C00",
+          "idx": 1
+        },
+        {
+          "name": "100,000-150,000美元",
+          "color": "#FFD700",
+          "idx": 2
+        },
+        {
+          "name": "超过150,000美元",
+          "color": "#32CD32",
+          "idx": 3
+        }
+      ]
+    },
+    {
+      "question": "以太坊是否会完成完整的扩容升级（Sharding）？",
+      "outcomes": [
+        {
+          "name": "是，完全实现",
+          "color": "#32CD32",
+          "idx": 0
+        },
+        {
+          "name": "部分实现",
+          "color": "#FFD700",
+          "idx": 1
+        },
+        {
+          "name": "否，延期",
+          "color": "#FF6B6B",
+          "idx": 2
+        }
+      ]
+    },
+    {
+      "question": "特斯拉全自动驾驶（FSD）是否会获得L5级认证？",
+      "outcomes": [
+        {
+          "name": "是",
+          "color": "#32CD32",
+          "idx": 0
+        },
+        {
+          "name": "否",
+          "color": "#FF6B6B",
+          "idx": 1
+        }
+      ]
+    },
+    {
+      "question": "苹果公司市值在2025年底会达到多少？",
+      "outcomes": [
+        {
+          "name": "低于3万亿美元",
+          "color": "#FF6B6B",
+          "idx": 0
+        },
+        {
+          "name": "3-3.5万亿美元",
+          "color": "#FFA500",
+          "idx": 1
+        },
+        {
+          "name": "3.5-4万亿美元",
+          "color": "#FFD700",
+          "idx": 2
+        },
+        {
+          "name": "超过4万亿美元",
+          "color": "#32CD32",
+          "idx": 3
+        }
+      ]
+    },
+    {
+      "question": "量子计算机是否会实现商业化应用突破？",
+      "outcomes": [
+        {
+          "name": "是，多个实际应用",
+          "color": "#32CD32",
+          "idx": 0
+        },
+        {
+          "name": "有限应用",
+          "color": "#FFD700",
+          "idx": 1
+        },
+        {
+          "name": "仍在实验阶段",
+          "color": "#FF6B6B",
+          "idx": 2
+        }
+      ]
+    },
+    {
+      "question": "Meta的元宇宙战略是否会取得重大进展？",
+      "outcomes": [
+        {
+          "name": "是，用户量大增",
+          "color": "#32CD32",
+          "idx": 0
+        },
+        {
+          "name": "小幅进展",
+          "color": "#FFD700",
+          "idx": 1
+        },
+        {
+          "name": "停滞或倒退",
+          "color": "#FF6B6B",
+          "idx": 2
+        }
+      ]
+    }
+  ]
+}
