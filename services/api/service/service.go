@@ -15,6 +15,12 @@ type Service interface {
 
 	// CreateEvent creates a new prediction event with sub-events, outcomes, and tags
 	CreateEvent(req *models.CreateEventRequest) (*models.CreateEventResponse, error)
+
+	// ListEvents retrieves events with filtering and pagination
+	ListEvents(req *models.ListEventsRequest) (*models.ListEventsResponse, error)
+
+	// GetEventDetail retrieves full event details including sub-events and outcomes
+	GetEventDetail(guid string) (*models.GetEventDetailResponse, error)
 }
 
 type HandlerSvc struct {

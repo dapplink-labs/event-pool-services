@@ -82,6 +82,11 @@ type EventDB interface {
 	CreateOutcome(db *gorm.DB, outcome *Outcome) error
 	GetOrCreateTag(db *gorm.DB, tagName string) (*Tag, error)
 	CreateEventTag(db *gorm.DB, eventTag *EventTag) error
+	ListEvents(db *gorm.DB, tags []string, status string, keyword string, startTime, endTime int64, page, limit int) ([]Event, int64, error)
+	GetEventByGUID(db *gorm.DB, guid string) (*Event, error)
+	GetEventTags(db *gorm.DB, eventGUID string) ([]Tag, error)
+	GetEventSubEvents(db *gorm.DB, eventGUID string) ([]SubEvent, error)
+	GetSubEventOutcomes(db *gorm.DB, subEventGUID string) ([]Outcome, error)
 }
 
 type eventDB struct{}
@@ -130,4 +135,80 @@ func (edb *eventDB) GetOrCreateTag(db *gorm.DB, tagName string) (*Tag, error) {
 
 func (edb *eventDB) CreateEventTag(db *gorm.DB, eventTag *EventTag) error {
 	return db.Create(eventTag).Error
+}
+
+// ListEvents retrieves events with filtering and pagination
+func (edb *eventDB) ListEvents(db *gorm.DB, tags []string, status string, keyword string, startTime, endTime int64, page, limit int) ([]Event, int64, error) {
+	var events []Event
+	var total int64
+
+	// Build query
+	query := db.Model(&Event{})
+
+	// Filter by tags (if provided)
+	if len(tags) > 0 {
+		query = query.Joins("JOIN event_tags ON event_tags.event_guid = events.guid").
+			Joins("JOIN tags ON tags.guid = event_tags.tag_guid").
+			Where("tags.name IN ?", tags).
+			Group("events.guid").
+			Having("COUNT(DISTINCT tags.name) = ?", len(tags))
+	}
+
+	// Filter by keyword (search in title and description)
+	if keyword != "" {
+		query = query.Where("title LIKE ? OR description LIKE ?", "%"+keyword+"%", "%"+keyword+"%")
+	}
+
+	// Filter by time range
+	if startTime > 0 {
+		query = query.Where("start_date >= ?", startTime)
+	}
+	if endTime > 0 {
+		query = query.Where("end_date <= ?", endTime)
+	}
+
+	// Count total records
+	if err := query.Count(&total).Error; err != nil {
+		return nil, 0, err
+	}
+
+	// Apply pagination and sorting
+	offset := (page - 1) * limit
+	if err := query.Order("created DESC").Limit(limit).Offset(offset).Find(&events).Error; err != nil {
+		return nil, 0, err
+	}
+
+	return events, total, nil
+}
+
+// GetEventByGUID retrieves a single event by GUID
+func (edb *eventDB) GetEventByGUID(db *gorm.DB, guid string) (*Event, error) {
+	var event Event
+	if err := db.Where("guid = ?", guid).First(&event).Error; err != nil {
+		return nil, err
+	}
+	return &event, nil
+}
+
+// GetEventTags retrieves all tags for a specific event
+func (edb *eventDB) GetEventTags(db *gorm.DB, eventGUID string) ([]Tag, error) {
+	var tags []Tag
+	err := db.Joins("JOIN event_tags ON event_tags.tag_guid = tags.guid").
+		Where("event_tags.event_guid = ?", eventGUID).
+		Find(&tags).Error
+	return tags, err
+}
+
+// GetEventSubEvents retrieves all sub-events for a specific event
+func (edb *eventDB) GetEventSubEvents(db *gorm.DB, eventGUID string) ([]SubEvent, error) {
+	var subEvents []SubEvent
+	err := db.Where("event_guid = ?", eventGUID).Order("created ASC").Find(&subEvents).Error
+	return subEvents, err
+}
+
+// GetSubEventOutcomes retrieves all outcomes for a specific sub-event
+func (edb *eventDB) GetSubEventOutcomes(db *gorm.DB, subEventGUID string) ([]Outcome, error) {
+	var outcomes []Outcome
+	err := db.Where("sub_event_guid = ?", subEventGUID).Order("idx ASC").Find(&outcomes).Error
+	return outcomes, err
 }

@@ -35,6 +35,8 @@ func NewRoutes(r *chi.Mux, svc service.Service) Routes {
 
 	// Register event routes
 	r.Post("/api/v1/admin/events", rs.CreateEventHandler)
+	r.Get("/api/v1/admin/events", rs.ListEventsHandler)
+	r.Get("/api/v1/admin/events/{guid}", rs.GetEventDetailHandler)
 
 	return rs
 }
