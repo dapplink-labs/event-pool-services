@@ -10,11 +10,11 @@ migrations: "./migrations"
 # 主数据库配置（必填）
 # ============================================
 master_db:
-  host: "localhost"           # 数据库地址
-  port: 5432                  # PostgreSQL 端口
-  name: "event_pod"  # 数据库名称（请修改为你的数据库名）
-  user: "zp"            # 数据库用户名（请修改）
-  password: "admin"   # 数据库密码（请修改）
+  host: "ddns.gis-data.cn"    # 数据库地址
+  port: 7433                  # PostgreSQL 端口
+  name: "event_pod"           # 数据库名称
+  user: "chooseme_event_pod"  # 数据库用户名
+  password: "UnRPgOahmgsX3g4N"  # 数据库密码
 
 # ============================================
 # 从数据库配置（可选，读写分离）
