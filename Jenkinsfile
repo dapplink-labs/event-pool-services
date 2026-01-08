@@ -6,8 +6,10 @@ pipeline {
     }
 
     environment {
-        GOPATH = "${WORKSPACE}"
-        GOBIN = "${WORKSPACE}/bin"
+        // Removed GOPATH and GOBIN to enable Go Module mode
+        // GOPATH = "${WORKSPACE}"
+        // GOBIN = "${WORKSPACE}/bin"
+        GO111MODULE = 'on'
         GOPROXY='https://goproxy.cn,direct'
         APP_NAME = 'event-pod-services'
         CONTAINER_PORT = '8081'
