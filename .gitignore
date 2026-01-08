@@ -4,8 +4,8 @@
 *.dll
 *.so
 *.dylib
-event-services
-event-pod-services
+/event-services
+/event-pod-services
 
 # Test binary, built with `go test -c`
 *.test
