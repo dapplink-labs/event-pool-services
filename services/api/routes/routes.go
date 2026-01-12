@@ -38,6 +38,9 @@ func NewRoutes(r *chi.Mux, svc service.Service) Routes {
 	r.Get("/api/v1/admin/events", rs.ListEventsHandler)
 	r.Get("/api/v1/admin/events/{guid}", rs.GetEventDetailHandler)
 
+	// Register predict event route (Dify integration)
+	r.Post("/api/v1/admin/predict-event", rs.PredictEventHandler)
+
 	return rs
 }
 

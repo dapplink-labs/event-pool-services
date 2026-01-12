@@ -55,7 +55,7 @@ CREATE TABLE IF NOT EXISTS outcomes (
     sub_event_guid    TEXT NOT NULL REFERENCES sub_events(guid) ON DELETE CASCADE,
     name              VARCHAR(100) NOT NULL,
     color             VARCHAR(20),
-    idx               INTEGER DEFAULT 0,
+    idx               INTEGER DEFAULT 0,  -- 选项排序，从0开始 比如yes=0, no=1
 
     -- 交易相关
     current_price     NUMERIC(5, 4) DEFAULT 0.5,

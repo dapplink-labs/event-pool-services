@@ -124,7 +124,7 @@ func (a *API) initRouter(ctx context.Context, cfg *config.Config) {
 	apiRouter := chi.NewRouter()
 
 	// Add all middlewares BEFORE registering routes
-	apiRouter.Use(middleware.Timeout(time.Second * 12))
+	apiRouter.Use(middleware.Timeout(time.Second * 200)) // Increased for AI prediction (Dify API can take 30-60s)
 	apiRouter.Use(middleware.Recoverer)
 
 	// Add CORS middleware

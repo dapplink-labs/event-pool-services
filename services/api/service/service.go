@@ -1,6 +1,8 @@
 package service
 
 import (
+	"context"
+
 	"github.com/multimarket-labs/event-pod-services/database"
 	"github.com/multimarket-labs/event-pod-services/services/api/models"
 	"github.com/multimarket-labs/event-pod-services/services/api/validator"
@@ -21,6 +23,9 @@ type Service interface {
 
 	// GetEventDetail retrieves full event details including sub-events and outcomes
 	GetEventDetail(guid string) (*models.GetEventDetailResponse, error)
+
+	// GetPredictEvent calls Dify workflow API to convert natural language query into structured event data
+	GetPredictEvent(ctx context.Context, userQuery string) (*EventDetail, error)
 }
 
 type HandlerSvc struct {

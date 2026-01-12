@@ -314,6 +314,23 @@ docker build -t event-pod-services:latest .
 docker-compose up -d
 ```
 
+## Proxy Configuration
+
+If you're using Dify API integration and experiencing timeout issues, you may need to configure a proxy:
+
+```bash
+# Set proxy environment variables (replace port with your proxy port)
+export HTTP_PROXY=http://127.0.0.1:7897
+export HTTPS_PROXY=http://127.0.0.1:7897
+
+# Start service
+./event-pod-services api --config ./config.yaml
+```
+
+**Alternative**: Enable TUN mode in your proxy software (Clash, Surge, etc.) to automatically proxy all traffic.
+
+For detailed proxy configuration, see [docs/PROXY_CONFIGURATION.md](docs/PROXY_CONFIGURATION.md).
+
 ## Security Best Practices
 
 1. **Never commit sensitive data**:
