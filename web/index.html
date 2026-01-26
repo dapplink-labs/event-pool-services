@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Event Pod Services - 管理面板</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 40px 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            color: white;
+            margin-bottom: 50px;
+        }
+
+        .header h1 {
+            font-size: 48px;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
+        }
+
+        .header p {
+            font-size: 18px;
+            opacity: 0.9;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 50px rgba(0, 0, 0, 0.3);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .card-icon {
+            font-size: 40px;
+            margin-right: 15px;
+        }
+
+        .card-title {
+            font-size: 24px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .card-badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 12px;
+            font-size: 11px;
+            margin-left: 10px;
+        }
+
+        .card-badge.old {
+            background: #6c757d;
+        }
+
+        .card-description {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 20px;
+        }
+
+        .card-features {
+            list-style: none;
+            margin-bottom: 20px;
+        }
+
+        .card-features li {
+            padding: 5px 0;
+            color: #555;
+            font-size: 14px;
+        }
+
+        .card-features li:before {
+            content: "✓ ";
+            color: #28a745;
+            font-weight: bold;
+            margin-right: 5px;
+        }
+
+        .card-button {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 12px 24px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .card-button:hover {
+            background: #5568d3;
+            transform: translateX(5px);
+        }
+
+        .section-title {
+            color: white;
+            font-size: 28px;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+
+        .info-section {
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            margin-bottom: 30px;
+        }
+
+        .info-section h3 {
+            color: #333;
+            margin-bottom: 15px;
+            font-size: 20px;
+        }
+
+        .info-section p {
+            color: #666;
+            line-height: 1.8;
+            margin-bottom: 10px;
+        }
+
+        .info-section code {
+            background: #f8f9fa;
+            padding: 2px 6px;
+            border-radius: 4px;
+            font-family: 'Courier New', monospace;
+            color: #e83e8c;
+        }
+
+        .api-endpoint {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin: 10px 0;
+            border-left: 4px solid #667eea;
+        }
+
+        .api-endpoint .method {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: 600;
+            margin-right: 10px;
+        }
+
+        .api-endpoint .method.get {
+            background: #28a745;
+        }
+
+        .api-endpoint .path {
+            font-family: 'Courier New', monospace;
+            color: #333;
+        }
+
+        .footer {
+            text-align: center;
+            color: white;
+            margin-top: 50px;
+            opacity: 0.8;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: #28a745;
+            margin-right: 5px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🎯 Event Pod Services</h1>
+            <p>预测事件管理系统 - 管理面板</p>
+        </div>
+
+        <h2 class="section-title">📱 新版页面（推荐）</h2>
+        <div class="cards-grid">
+            <div class="card" onclick="window.location.href='create-event-new.html'">
+                <div class="card-header">
+                    <div class="card-icon">➕</div>
+                    <div>
+                        <div class="card-title">
+                            创建事件
+                            <span class="card-badge">NEW</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-description">
+                    基于新表结构（20251117001.sql）的事件创建工具，支持多语言、子事件和方向管理。
+                </div>
+                <ul class="card-features">
+                    <li>支持多语言事件创建</li>
+                    <li>动态添加子事件和方向</li>
+                    <li>区分运动类和非运动类</li>
+                    <li>示例数据快速填充</li>
+                </ul>
+                <a href="create-event-new.html" class="card-button">打开页面 →</a>
+            </div>
+
+            <div class="card" onclick="window.location.href='list-events-new.html'">
+                <div class="card-header">
+                    <div class="card-icon">📋</div>
+                    <div>
+                        <div class="card-title">
+                            事件列表
+                            <span class="card-badge">NEW</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-description">
+                    查询和浏览所有预测事件，支持多语言、分类过滤、状态筛选和分页显示。
+                </div>
+                <ul class="card-features">
+                    <li>多语言支持（必选）</li>
+                    <li>按分类和状态过滤</li>
+                    <li>完整的事件信息展示</li>
+                    <li>分页浏览</li>
+                </ul>
+                <a href="list-events-new.html" class="card-button">打开页面 →</a>
+            </div>
+        </div>
+
+        <h2 class="section-title">🗂️ 旧版页面</h2>
+        <div class="cards-grid">
+            <div class="card" onclick="window.location.href='create-event.html'">
+                <div class="card-header">
+                    <div class="card-icon">📝</div>
+                    <div>
+                        <div class="card-title">
+                            创建事件
+                            <span class="card-badge old">旧版</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-description">
+                    基于旧表结构的事件创建工具（events, sub_events, outcomes, tags）。
+                </div>
+                <a href="create-event.html" class="card-button">打开页面 →</a>
+            </div>
+
+            <div class="card" onclick="window.location.href='list-events.html'">
+                <div class="card-header">
+                    <div class="card-icon">📊</div>
+                    <div>
+                        <div class="card-title">
+                            事件列表
+                            <span class="card-badge old">旧版</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-description">
+                    基于旧表结构的事件列表查询工具。
+                </div>
+                <a href="list-events.html" class="card-button">打开页面 →</a>
+            </div>
+
+            <div class="card" onclick="window.location.href='predict-event.html'">
+                <div class="card-header">
+                    <div class="card-icon">🤖</div>
+                    <div>
+                        <div class="card-title">
+                            AI 预测
+                            <span class="card-badge old">Dify</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-description">
+                    使用 Dify AI 工作流将自然语言转换为结构化事件数据。
+                </div>
+                <a href="predict-event.html" class="card-button">打开页面 →</a>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3>📡 API 端点</h3>
+            <p>新版 API 基于表结构 20251117001.sql：</p>
+
+            <div class="api-endpoint">
+                <span class="method">POST</span>
+                <span class="path">/api/v1/events</span>
+                <p style="margin-top: 10px; color: #666; font-size: 14px;">创建预测事件（支持多语言、子事件、方向）</p>
+            </div>
+
+            <div class="api-endpoint">
+                <span class="method get">GET</span>
+                <span class="path">/api/v1/events?language_guid=zh_CN&page=1&limit=20</span>
+                <p style="margin-top: 10px; color: #666; font-size: 14px;">查询事件列表（支持多语言、分类过滤、状态筛选）</p>
+            </div>
+
+            <p style="margin-top: 20px;">
+                <strong>后端服务地址：</strong>
+                <code>http://localhost:8080</code>
+                <span class="status-indicator"></span>
+            </p>
+        </div>
+
+        <div class="info-section">
+            <h3>📚 文档资源</h3>
+            <p>
+                <strong>新版页面使用指南：</strong>
+                <a href="NEW_PAGES_GUIDE.md" target="_blank" style="color: #667eea;">NEW_PAGES_GUIDE.md</a>
+            </p>
+            <p>
+                <strong>API 接口文档：</strong>
+                <a href="../docs/EVENT_API.md" target="_blank" style="color: #667eea;">docs/EVENT_API.md</a>
+            </p>
+            <p>
+                <strong>数据库表结构：</strong>
+                <a href="../migrations/20251117001.sql" target="_blank" style="color: #667eea;">migrations/20251117001.sql</a>
+            </p>
+            <p>
+                <strong>数据库清理脚本：</strong>
+                <a href="../migrations/cleanup_and_rebuild.sql" target="_blank" style="color: #667eea;">migrations/cleanup_and_rebuild.sql</a>
+            </p>
+        </div>
+
+        <div class="info-section">
+            <h3>⚙️ 快速开始</h3>
+            <p><strong>1. 启动后端服务：</strong></p>
+            <p><code>cd /Users/zppass/GolandProjects/event-pod-services</code></p>
+            <p><code>go run cmd/event-pod-services/main.go</code></p>
+
+            <p style="margin-top: 15px;"><strong>2. 准备数据库：</strong></p>
+            <p><code>psql -U your_username -d your_database -f migrations/cleanup_and_rebuild.sql</code></p>
+
+            <p style="margin-top: 15px;"><strong>3. 打开页面：</strong></p>
+            <p>直接在浏览器中打开 HTML 文件，或使用本地 HTTP 服务器：</p>
+            <p><code>python3 -m http.server 3000</code></p>
+        </div>
+
+        <div class="footer">
+            <p>Event Pod Services © 2026 | 基于新表结构 20251117001.sql</p>
+            <p style="margin-top: 10px; font-size: 14px;">
+                Made with ❤️ by Claude Code
+            </p>
+        </div>
+    </div>
+
+    <script>
+        // 检查后端服务状态
+        async function checkBackendStatus() {
+            try {
+                const response = await fetch('http://localhost:8080/healthz');
+                if (response.ok) {
+                    console.log('✅ 后端服务运行正常');
+                }
+            } catch (error) {
+                console.warn('⚠️ 无法连接到后端服务，请确保服务已启动');
+            }
+        }
+
+        // 页面加载时检查后端状态
+        window.addEventListener('DOMContentLoaded', checkBackendStatus);
+    </script>
+</body>
+</html>
