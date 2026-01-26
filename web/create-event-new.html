@@ -1,0 +1,612 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>创建预测事件 - Event Pod Services (新版)</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .badge {
+            display: inline-block;
+            background: #667eea;
+            color: white;
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-size: 12px;
+            margin-left: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+
+        .required {
+            color: #e74c3c;
+            margin-left: 4px;
+        }
+
+        input[type="text"],
+        textarea,
+        select {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        textarea:focus,
+        select:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            min-height: 100px;
+            resize: vertical;
+        }
+
+        .checkbox-group {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        input[type="checkbox"] {
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
+        }
+
+        .sub-event-section {
+            background: #f8f9fa;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            border: 2px solid #e0e0e0;
+        }
+
+        .sub-event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .sub-event-title {
+            font-size: 16px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .direction-item {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 10px;
+            border: 1px solid #e0e0e0;
+        }
+
+        .direction-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+
+        .direction-fields {
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #6c757d;
+            color: white;
+        }
+
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+
+        .btn-success {
+            background: #28a745;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #218838;
+        }
+
+        .btn-danger {
+            background: #dc3545;
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: #c82333;
+        }
+
+        .btn-small {
+            padding: 8px 16px;
+            font-size: 12px;
+        }
+
+        .button-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .response-section {
+            margin-top: 30px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .response-section.show {
+            display: block;
+        }
+
+        .response-section.success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+        }
+
+        .response-section.error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+        }
+
+        .response-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        .response-content {
+            background: white;
+            padding: 15px;
+            border-radius: 6px;
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            overflow-x: auto;
+            white-space: pre-wrap;
+            word-wrap: break-word;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 10px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .nav-links {
+            margin-bottom: 20px;
+        }
+
+        .nav-links a {
+            color: #667eea;
+            text-decoration: none;
+            margin-right: 20px;
+            font-weight: 500;
+        }
+
+        .nav-links a:hover {
+            text-decoration: underline;
+        }
+
+        .help-text {
+            font-size: 12px;
+            color: #6c757d;
+            margin-top: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="nav-links">
+            <a href="create-event-new.html">创建事件</a>
+            <a href="list-events-new.html">事件列表</a>
+            <a href="create-event.html">旧版创建</a>
+            <a href="list-events.html">旧版列表</a>
+        </div>
+
+        <h1>创建预测事件 <span class="badge">新版 API</span></h1>
+        <p class="subtitle">基于新表结构（20251117001.sql）的事件创建工具</p>
+
+        <form id="eventForm">
+            <!-- 基础信息 -->
+            <div class="form-group">
+                <label>分类 GUID <span class="required">*</span></label>
+                <input type="text" id="categoryGuid" required placeholder="例如: cat001">
+                <div class="help-text">事件所属的分类标识</div>
+            </div>
+
+            <div class="form-group">
+                <label>生态 GUID <span class="required">*</span></label>
+                <input type="text" id="ecosystemGuid" required placeholder="例如: eco001">
+                <div class="help-text">事件所属的生态系统标识</div>
+            </div>
+
+            <div class="form-group">
+                <label>时间标签 GUID <span class="required">*</span></label>
+                <input type="text" id="eventPeriodGuid" required placeholder="例如: period001">
+                <div class="help-text">事件的时间周期标识</div>
+            </div>
+
+            <div class="form-group">
+                <label>语言 GUID <span class="required">*</span></label>
+                <select id="languageGuid" required>
+                    <option value="">请选择语言</option>
+                    <option value="zh_CN">中文（简体）</option>
+                    <option value="zh_TW">中文（繁体）</option>
+                    <option value="en_US">English</option>
+                    <option value="ja_JP">日本語</option>
+                    <option value="ko_KR">한국어</option>
+                </select>
+                <div class="help-text">事件标题和规则的语言</div>
+            </div>
+
+            <div class="form-group">
+                <label>事件标题 <span class="required">*</span></label>
+                <input type="text" id="title" required placeholder="例如: 2026世界杯决赛谁会获胜？">
+            </div>
+
+            <div class="form-group">
+                <label>规则说明</label>
+                <textarea id="rules" placeholder="输入事件的规则说明..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label>Logo URL</label>
+                <input type="text" id="logo" placeholder="https://example.com/logo.png">
+            </div>
+
+            <div class="form-group">
+                <label class="checkbox-group">
+                    <input type="checkbox" id="isSports">
+                    <span>这是运动类事件</span>
+                </label>
+                <div class="help-text">勾选此项表示这是体育赛事相关的预测事件</div>
+            </div>
+
+            <!-- 运动类事件专用字段 -->
+            <div id="sportsFields" style="display: none;">
+                <div class="form-group">
+                    <label>主队 GUID</label>
+                    <input type="text" id="mainTeamGroupGuid" placeholder="例如: team001">
+                    <div class="help-text">主队或主要参赛方的标识</div>
+                </div>
+
+                <div class="form-group">
+                    <label>客队 GUID</label>
+                    <input type="text" id="clusterTeamGroupGuid" placeholder="例如: team002">
+                    <div class="help-text">客队或对阵方的标识</div>
+                </div>
+            </div>
+
+            <!-- 子事件列表 -->
+            <div class="form-group">
+                <label>子事件列表 <span class="required">*</span></label>
+                <div id="subEventsContainer"></div>
+                <button type="button" class="btn btn-success btn-small" onclick="addSubEvent()">+ 添加子事件</button>
+            </div>
+
+            <!-- 按钮组 -->
+            <div class="button-group">
+                <button type="submit" class="btn btn-primary">创建事件</button>
+                <button type="button" class="btn btn-secondary" onclick="resetForm()">重置表单</button>
+                <button type="button" class="btn btn-secondary" onclick="fillSampleData()">填充示例数据</button>
+            </div>
+        </form>
+
+        <!-- 加载状态 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在创建事件...</p>
+        </div>
+
+        <!-- 响应结果 -->
+        <div class="response-section" id="responseSection">
+            <div class="response-title" id="responseTitle"></div>
+            <div class="response-content" id="responseContent"></div>
+        </div>
+    </div>
+
+    <script>
+        let subEventCounter = 0;
+
+        // 监听运动类事件复选框
+        document.getElementById('isSports').addEventListener('change', function() {
+            document.getElementById('sportsFields').style.display = this.checked ? 'block' : 'none';
+        });
+
+        // 添加子事件
+        function addSubEvent() {
+            subEventCounter++;
+            const container = document.getElementById('subEventsContainer');
+            const subEventDiv = document.createElement('div');
+            subEventDiv.className = 'sub-event-section';
+            subEventDiv.id = `subEvent${subEventCounter}`;
+            subEventDiv.innerHTML = `
+                <div class="sub-event-header">
+                    <div class="sub-event-title">子事件 #${subEventCounter}</div>
+                    <button type="button" class="btn btn-danger btn-small" onclick="removeSubEvent(${subEventCounter})">删除</button>
+                </div>
+                <div class="form-group">
+                    <label>子事件标题 <span class="required">*</span></label>
+                    <input type="text" class="sub-event-title-input" required placeholder="例如: 胜平负">
+                </div>
+                <div class="form-group">
+                    <label>方向列表 <span class="required">*</span> (至少2个)</label>
+                    <div class="directions-container" id="directions${subEventCounter}"></div>
+                    <button type="button" class="btn btn-success btn-small" onclick="addDirection(${subEventCounter})">+ 添加方向</button>
+                </div>
+            `;
+            container.appendChild(subEventDiv);
+
+            // 默认添加两个方向
+            addDirection(subEventCounter);
+            addDirection(subEventCounter);
+        }
+
+        // 删除子事件
+        function removeSubEvent(id) {
+            const element = document.getElementById(`subEvent${id}`);
+            if (element) {
+                element.remove();
+            }
+        }
+
+        // 添加方向
+        function addDirection(subEventId) {
+            const container = document.getElementById(`directions${subEventId}`);
+            const directionCount = container.children.length + 1;
+            const directionDiv = document.createElement('div');
+            directionDiv.className = 'direction-item';
+            directionDiv.innerHTML = `
+                <div class="direction-header">
+                    <strong>方向 #${directionCount}</strong>
+                    <button type="button" class="btn btn-danger btn-small" onclick="this.parentElement.parentElement.remove()">删除</button>
+                </div>
+                <div class="direction-fields">
+                    <div>
+                        <label>方向名称 <span class="required">*</span></label>
+                        <input type="text" class="direction-name" required placeholder="例如: Yes / No">
+                    </div>
+                    <div>
+                        <label>概率 (%) <span class="required">*</span></label>
+                        <input type="number" class="direction-chance" required min="0" max="100" value="50">
+                    </div>
+                </div>
+            `;
+            container.appendChild(directionDiv);
+        }
+
+        // 填充示例数据
+        function fillSampleData() {
+            document.getElementById('categoryGuid').value = 'cat001';
+            document.getElementById('ecosystemGuid').value = 'eco001';
+            document.getElementById('eventPeriodGuid').value = 'period001';
+            document.getElementById('languageGuid').value = 'zh_CN';
+            document.getElementById('title').value = '2026世界杯决赛谁会获胜？';
+            document.getElementById('rules').value = '预测2026年世界杯决赛的获胜队伍。结算时间为比赛结束后24小时内。';
+            document.getElementById('logo').value = 'https://example.com/worldcup2026.png';
+            document.getElementById('isSports').checked = true;
+            document.getElementById('isSports').dispatchEvent(new Event('change'));
+            document.getElementById('mainTeamGroupGuid').value = 'team001';
+            document.getElementById('clusterTeamGroupGuid').value = 'team002';
+
+            // 清空现有子事件
+            document.getElementById('subEventsContainer').innerHTML = '';
+            subEventCounter = 0;
+
+            // 添加示例子事件
+            addSubEvent();
+            const titleInput = document.querySelector('.sub-event-title-input');
+            if (titleInput) titleInput.value = '胜平负';
+        }
+
+        // 重置表单
+        function resetForm() {
+            document.getElementById('eventForm').reset();
+            document.getElementById('subEventsContainer').innerHTML = '';
+            document.getElementById('sportsFields').style.display = 'none';
+            document.getElementById('responseSection').classList.remove('show', 'success', 'error');
+            subEventCounter = 0;
+        }
+
+        // 表单提交
+        document.getElementById('eventForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            // 收集子事件数据
+            const subEvents = [];
+            const subEventElements = document.querySelectorAll('.sub-event-section');
+
+            for (const subEventEl of subEventElements) {
+                const title = subEventEl.querySelector('.sub-event-title-input').value;
+                const directions = [];
+
+                const directionElements = subEventEl.querySelectorAll('.direction-item');
+                for (const dirEl of directionElements) {
+                    const direction = dirEl.querySelector('.direction-name').value;
+                    const chance = parseInt(dirEl.querySelector('.direction-chance').value);
+                    directions.push({ direction, chance });
+                }
+
+                if (directions.length < 2) {
+                    alert('每个子事件至少需要2个方向！');
+                    return;
+                }
+
+                subEvents.push({ title, directions });
+            }
+
+            if (subEvents.length === 0) {
+                alert('至少需要添加一个子事件！');
+                return;
+            }
+
+            // 构建请求数据
+            const requestData = {
+                category_guid: document.getElementById('categoryGuid').value,
+                ecosystem_guid: document.getElementById('ecosystemGuid').value,
+                event_period_guid: document.getElementById('eventPeriodGuid').value,
+                language_guid: document.getElementById('languageGuid').value,
+                title: document.getElementById('title').value,
+                rules: document.getElementById('rules').value,
+                logo: document.getElementById('logo').value,
+                is_sports: document.getElementById('isSports').checked,
+                sub_events: subEvents
+            };
+
+            // 如果是运动类事件，添加队伍信息
+            if (requestData.is_sports) {
+                requestData.main_team_group_guid = document.getElementById('mainTeamGroupGuid').value || '0';
+                requestData.cluster_team_group_guid = document.getElementById('clusterTeamGroupGuid').value || '0';
+            } else {
+                requestData.main_team_group_guid = '0';
+                requestData.cluster_team_group_guid = '0';
+            }
+
+            // 显示加载状态
+            document.getElementById('loading').classList.add('show');
+            document.getElementById('responseSection').classList.remove('show');
+
+            try {
+                const response = await fetch('http://localhost:8080/api/v1/events', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(requestData)
+                });
+
+                const data = await response.json();
+
+                // 隐藏加载状态
+                document.getElementById('loading').classList.remove('show');
+
+                // 显示响应
+                const responseSection = document.getElementById('responseSection');
+                const responseTitle = document.getElementById('responseTitle');
+                const responseContent = document.getElementById('responseContent');
+
+                responseSection.classList.add('show');
+
+                if (response.ok) {
+                    responseSection.classList.add('success');
+                    responseSection.classList.remove('error');
+                    responseTitle.textContent = '✅ 事件创建成功！';
+                    responseContent.textContent = JSON.stringify(data, null, 2);
+                } else {
+                    responseSection.classList.add('error');
+                    responseSection.classList.remove('success');
+                    responseTitle.textContent = '❌ 创建失败';
+                    responseContent.textContent = JSON.stringify(data, null, 2);
+                }
+            } catch (error) {
+                document.getElementById('loading').classList.remove('show');
+
+                const responseSection = document.getElementById('responseSection');
+                responseSection.classList.add('show', 'error');
+                responseSection.classList.remove('success');
+                document.getElementById('responseTitle').textContent = '❌ 网络错误';
+                document.getElementById('responseContent').textContent = error.message;
+            }
+        });
+
+        // 页面加载时添加一个默认子事件
+        window.addEventListener('DOMContentLoaded', function() {
+            addSubEvent();
+        });
+    </script>
+</body>
+</html>

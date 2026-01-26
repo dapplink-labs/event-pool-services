@@ -1,0 +1,647 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>事件创建工具 - Event Pod Services</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.2);
+            padding: 30px;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 10px;
+            font-size: 28px;
+        }
+
+        .subtitle {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 14px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+
+        input[type="text"],
+        input[type="number"],
+        textarea {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        input[type="text"]:focus,
+        input[type="number"]:focus,
+        textarea:focus {
+            outline: none;
+            border-color: #667eea;
+        }
+
+        textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        .tag-input-container {
+            display: flex;
+            gap: 10px;
+        }
+
+        .tag-input-container input {
+            flex: 1;
+        }
+
+        .tags-display {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .tag-item {
+            background: #667eea;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 13px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .tag-remove {
+            cursor: pointer;
+            font-weight: bold;
+        }
+
+        .sub-event-container {
+            border: 2px solid #f0f0f0;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 20px;
+            background: #fafafa;
+        }
+
+        .sub-event-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+        }
+
+        .sub-event-title {
+            font-weight: 600;
+            color: #667eea;
+            font-size: 16px;
+        }
+
+        .outcome-item {
+            background: white;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            padding: 15px;
+            margin-bottom: 10px;
+        }
+
+        .outcome-row {
+            display: grid;
+            grid-template-columns: 2fr 100px 80px 40px;
+            gap: 10px;
+            align-items: end;
+        }
+
+        .color-input-wrapper {
+            position: relative;
+        }
+
+        input[type="color"] {
+            width: 100%;
+            height: 42px;
+            border: 2px solid #e0e0e0;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: #667eea;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #5568d3;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f0f0f0;
+            color: #333;
+        }
+
+        .btn-secondary:hover {
+            background: #e0e0e0;
+        }
+
+        .btn-danger {
+            background: #ff4757;
+            color: white;
+            padding: 8px 12px;
+            font-size: 12px;
+        }
+
+        .btn-danger:hover {
+            background: #ee5a6f;
+        }
+
+        .btn-success {
+            background: #2ed573;
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: #26de81;
+        }
+
+        .btn-group {
+            display: flex;
+            gap: 10px;
+            margin-top: 30px;
+        }
+
+        .response-container {
+            margin-top: 30px;
+            padding: 20px;
+            border-radius: 8px;
+            display: none;
+        }
+
+        .response-success {
+            background: #d4edda;
+            border: 2px solid #c3e6cb;
+            color: #155724;
+        }
+
+        .response-error {
+            background: #f8d7da;
+            border: 2px solid #f5c6cb;
+            color: #721c24;
+        }
+
+        .response-title {
+            font-weight: 600;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+
+        pre {
+            background: rgba(0, 0, 0, 0.05);
+            padding: 15px;
+            border-radius: 6px;
+            overflow-x: auto;
+            font-size: 12px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+
+        .config-section {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .config-section label {
+            color: #666;
+            font-size: 13px;
+        }
+
+        .example-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #667eea;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>📊 事件创建工具</h1>
+        <p class="subtitle">可视化创建预测市场事件</p>
+
+        <!-- 配置区 -->
+        <div class="config-section">
+            <div class="form-group">
+                <label for="apiUrl">API 地址</label>
+                <input type="text" id="apiUrl" value="http://localhost:8080/api/v1/admin/events" placeholder="API URL">
+            </div>
+        </div>
+
+        <!-- 示例按钮 -->
+        <div class="example-buttons">
+            <button class="btn btn-secondary" onclick="loadExample('simple')">加载简单示例</button>
+            <button class="btn btn-secondary" onclick="loadExample('sports')">加载体育示例</button>
+            <button class="btn btn-secondary" onclick="loadExample('tech')">加载科技示例</button>
+            <button class="btn btn-secondary" onclick="clearForm()">清空表单</button>
+            <button class="btn btn-secondary" onclick="window.location.href='list-events.html'">📋 查看事件列表</button>
+        </div>
+
+        <form id="eventForm">
+            <!-- 基本信息 -->
+            <div class="form-group">
+                <label for="title">事件标题 *</label>
+                <input type="text" id="title" required placeholder="例如：2026 FIFA 世界杯冠军预测">
+            </div>
+
+            <div class="form-group">
+                <label for="description">事件描述</label>
+                <textarea id="description" placeholder="详细描述这个预测事件..."></textarea>
+            </div>
+
+            <div class="form-group">
+                <label for="imageUrl">图片URL</label>
+                <input type="text" id="imageUrl" placeholder="https://example.com/image.jpg">
+            </div>
+
+            <div class="form-group">
+                <label for="startDate">开始时间 (Unix时间戳)</label>
+                <input type="number" id="startDate" placeholder="1704067200">
+            </div>
+
+            <div class="form-group">
+                <label for="endDate">结束时间 (Unix时间戳)</label>
+                <input type="number" id="endDate" placeholder="1735689600">
+            </div>
+
+            <!-- 标签 -->
+            <div class="form-group">
+                <label>标签</label>
+                <div class="tag-input-container">
+                    <input type="text" id="tagInput" placeholder="输入标签后按回车">
+                    <button type="button" class="btn btn-secondary" onclick="addTag()">添加标签</button>
+                </div>
+                <div class="tags-display" id="tagsDisplay"></div>
+            </div>
+
+            <!-- 子事件 -->
+            <div class="form-group">
+                <label>子事件（至少一个）</label>
+                <div id="subEventsContainer"></div>
+                <button type="button" class="btn btn-success" onclick="addSubEvent()">+ 添加子事件</button>
+            </div>
+
+            <!-- 提交按钮 -->
+            <div class="btn-group">
+                <button type="submit" class="btn btn-primary">🚀 创建事件</button>
+                <button type="button" class="btn btn-secondary" onclick="previewJSON()">👁️ 预览JSON</button>
+            </div>
+        </form>
+
+        <!-- 加载动画 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p style="margin-top: 10px; color: #666;">正在创建事件...</p>
+        </div>
+
+        <!-- 响应结果 -->
+        <div class="response-container" id="responseContainer">
+            <div class="response-title" id="responseTitle"></div>
+            <pre id="responseContent"></pre>
+        </div>
+    </div>
+
+    <script>
+        let tags = [];
+        let subEventCounter = 0;
+
+        // 添加标签
+        function addTag() {
+            const input = document.getElementById('tagInput');
+            const tag = input.value.trim();
+            if (tag && !tags.includes(tag)) {
+                tags.push(tag);
+                renderTags();
+                input.value = '';
+            }
+        }
+
+        // 渲染标签
+        function renderTags() {
+            const container = document.getElementById('tagsDisplay');
+            container.innerHTML = tags.map(tag => `
+                <div class="tag-item">
+                    <span>${tag}</span>
+                    <span class="tag-remove" onclick="removeTag('${tag}')">×</span>
+                </div>
+            `).join('');
+        }
+
+        // 删除标签
+        function removeTag(tag) {
+            tags = tags.filter(t => t !== tag);
+            renderTags();
+        }
+
+        // 标签输入框回车事件
+        document.getElementById('tagInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                addTag();
+            }
+        });
+
+        // 添加子事件
+        function addSubEvent() {
+            subEventCounter++;
+            const container = document.getElementById('subEventsContainer');
+            const subEventId = 'subEvent' + subEventCounter;
+
+            const subEventHTML = `
+                <div class="sub-event-container" id="${subEventId}">
+                    <div class="sub-event-header">
+                        <div class="sub-event-title">子事件 #${subEventCounter}</div>
+                        <button type="button" class="btn btn-danger" onclick="removeSubEvent('${subEventId}')">删除</button>
+                    </div>
+                    <div class="form-group">
+                        <label>问题 *</label>
+                        <input type="text" class="sub-event-question" required placeholder="例如：谁将获得冠军？">
+                    </div>
+                    <div class="form-group">
+                        <label>结果选项（至少两个）</label>
+                        <div class="outcomes-container"></div>
+                        <button type="button" class="btn btn-success" onclick="addOutcome('${subEventId}')">+ 添加选项</button>
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', subEventHTML);
+            // 自动添加两个结果选项
+            addOutcome(subEventId);
+            addOutcome(subEventId);
+        }
+
+        // 删除子事件
+        function removeSubEvent(subEventId) {
+            document.getElementById(subEventId).remove();
+        }
+
+        // 添加结果选项
+        function addOutcome(subEventId) {
+            const subEvent = document.getElementById(subEventId);
+            const container = subEvent.querySelector('.outcomes-container');
+            const outcomeIndex = container.children.length;
+
+            const outcomeHTML = `
+                <div class="outcome-item">
+                    <div class="outcome-row">
+                        <div>
+                            <label>选项名称 *</label>
+                            <input type="text" class="outcome-name" required placeholder="例如：巴西">
+                        </div>
+                        <div class="color-input-wrapper">
+                            <label>颜色</label>
+                            <input type="color" class="outcome-color" value="${getRandomColor()}">
+                        </div>
+                        <div>
+                            <label>索引</label>
+                            <input type="number" class="outcome-idx" value="${outcomeIndex}" min="0">
+                        </div>
+                        <div style="display: flex; align-items: end;">
+                            <button type="button" class="btn btn-danger" onclick="this.closest('.outcome-item').remove()">×</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            container.insertAdjacentHTML('beforeend', outcomeHTML);
+        }
+
+        // 随机颜色
+        function getRandomColor() {
+            const colors = ['#FF6B6B', '#4ECDC4', '#45B7D1', '#FFA07A', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E2'];
+            return colors[Math.floor(Math.random() * colors.length)];
+        }
+
+        // 收集表单数据
+        function collectFormData() {
+            const subEvents = [];
+            document.querySelectorAll('.sub-event-container').forEach(subEventEl => {
+                const question = subEventEl.querySelector('.sub-event-question').value;
+                const outcomes = [];
+
+                subEventEl.querySelectorAll('.outcome-item').forEach(outcomeEl => {
+                    outcomes.push({
+                        name: outcomeEl.querySelector('.outcome-name').value,
+                        color: outcomeEl.querySelector('.outcome-color').value,
+                        idx: parseInt(outcomeEl.querySelector('.outcome-idx').value)
+                    });
+                });
+
+                if (question && outcomes.length >= 2) {
+                    subEvents.push({ question, outcomes });
+                }
+            });
+
+            return {
+                title: document.getElementById('title').value,
+                description: document.getElementById('description').value,
+                image_url: document.getElementById('imageUrl').value,
+                start_date: parseInt(document.getElementById('startDate').value) || Math.floor(Date.now() / 1000),
+                end_date: parseInt(document.getElementById('endDate').value) || Math.floor(Date.now() / 1000) + 31536000,
+                tags: tags,
+                sub_events: subEvents
+            };
+        }
+
+        // 预览JSON
+        function previewJSON() {
+            const data = collectFormData();
+            const responseContainer = document.getElementById('responseContainer');
+            const responseTitle = document.getElementById('responseTitle');
+            const responseContent = document.getElementById('responseContent');
+
+            responseContainer.style.display = 'block';
+            responseContainer.className = 'response-container';
+            responseTitle.textContent = '📋 请求数据预览';
+            responseContent.textContent = JSON.stringify(data, null, 2);
+        }
+
+        // 提交表单
+        document.getElementById('eventForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+
+            const data = collectFormData();
+            const apiUrl = document.getElementById('apiUrl').value;
+            const loading = document.getElementById('loading');
+            const responseContainer = document.getElementById('responseContainer');
+            const responseTitle = document.getElementById('responseTitle');
+            const responseContent = document.getElementById('responseContent');
+
+            // 验证
+            if (!data.title) {
+                alert('请填写事件标题！');
+                return;
+            }
+            if (data.sub_events.length === 0) {
+                alert('请至少添加一个子事件！');
+                return;
+            }
+
+            // 显示加载动画
+            loading.style.display = 'block';
+            responseContainer.style.display = 'none';
+
+            try {
+                const response = await fetch(apiUrl, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const result = await response.json();
+
+                // 隐藏加载动画
+                loading.style.display = 'none';
+
+                // 显示结果
+                responseContainer.style.display = 'block';
+                if (response.ok) {
+                    responseContainer.className = 'response-container response-success';
+                    responseTitle.textContent = '✅ 创建成功！';
+                } else {
+                    responseContainer.className = 'response-container response-error';
+                    responseTitle.textContent = '❌ 创建失败';
+                }
+                responseContent.textContent = JSON.stringify(result, null, 2);
+
+                // 滚动到结果
+                responseContainer.scrollIntoView({ behavior: 'smooth' });
+            } catch (error) {
+                loading.style.display = 'none';
+                responseContainer.style.display = 'block';
+                responseContainer.className = 'response-container response-error';
+                responseTitle.textContent = '❌ 请求失败';
+                responseContent.textContent = error.message;
+            }
+        });
+
+        // 加载示例
+        function loadExample(type) {
+            clearForm();
+
+            if (type === 'simple') {
+                document.getElementById('title').value = '简单测试事件';
+                document.getElementById('description').value = '这是一个简单的测试事件';
+                document.getElementById('imageUrl').value = 'https://example.com/test.jpg';
+                tags = ['测试', '示例'];
+                renderTags();
+                addSubEvent();
+
+            } else if (type === 'sports') {
+                document.getElementById('title').value = 'NBA 2024-2025 赛季总冠军预测';
+                document.getElementById('description').value = '预测 NBA 新赛季的总冠军归属';
+                document.getElementById('imageUrl').value = 'https://example.com/nba.jpg';
+                tags = ['NBA', '篮球', '体育'];
+                renderTags();
+                addSubEvent();
+                const subEvent = document.querySelector('.sub-event-container');
+                subEvent.querySelector('.sub-event-question').value = '谁将获得总冠军？';
+
+            } else if (type === 'tech') {
+                document.getElementById('title').value = '2025年科技行业预测';
+                document.getElementById('description').value = '预测科技行业的重大发展';
+                document.getElementById('imageUrl').value = 'https://example.com/tech.jpg';
+                tags = ['科技', 'AI', '区块链'];
+                renderTags();
+                addSubEvent();
+                const subEvent = document.querySelector('.sub-event-container');
+                subEvent.querySelector('.sub-event-question').value = 'GPT-5 是否会在 2025 年发布？';
+            }
+
+            // 设置默认时间戳
+            document.getElementById('startDate').value = Math.floor(Date.now() / 1000);
+            document.getElementById('endDate').value = Math.floor(Date.now() / 1000) + 31536000; // +1年
+        }
+
+        // 清空表单
+        function clearForm() {
+            document.getElementById('eventForm').reset();
+            tags = [];
+            renderTags();
+            document.getElementById('subEventsContainer').innerHTML = '';
+            subEventCounter = 0;
+            document.getElementById('responseContainer').style.display = 'none';
+        }
+
+        // 页面加载时初始化
+        window.onload = function() {
+            // 默认加载一个子事件
+            addSubEvent();
+        };
+    </script>
+</body>
+</html>
