@@ -15,17 +15,14 @@ type Service interface {
 	// Example: Add your business methods here
 	// GetUserInfo(userID string) (*UserInfo, error)
 
-	// CreateEvent creates a new prediction event with sub-events, outcomes, and tags
-	CreateEvent(req *models.CreateEventRequest) (*models.CreateEventResponse, error)
-
-	// ListEvents retrieves events with filtering and pagination
-	ListEvents(req *models.ListEventsRequest) (*models.ListEventsResponse, error)
-
-	// GetEventDetail retrieves full event details including sub-events and outcomes
-	GetEventDetail(guid string) (*models.GetEventDetailResponse, error)
-
 	// GetPredictEvent calls Dify workflow API to convert natural language query into structured event data
 	GetPredictEvent(ctx context.Context, userQuery string) (*EventDetail, error)
+
+	// CreateEvent 创建新的预测事件
+	CreateEvent(req *models.CreateEventRequest) (*models.CreateEventResponse, error)
+
+	// ListEvents 查询事件列表（支持多语言）
+	ListEvents(req *models.ListEventsRequest) (*models.ListEventsResponse, error)
 }
 
 type HandlerSvc struct {

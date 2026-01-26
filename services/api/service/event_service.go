@@ -2,137 +2,151 @@ package service
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/multimarket-labs/event-pod-services/database"
 	"github.com/multimarket-labs/event-pod-services/database/backend"
 	"github.com/multimarket-labs/event-pod-services/services/api/models"
 )
 
-// CreateEvent creates a new prediction event with sub-events, outcomes, and tags
-// All operations are wrapped in a database transaction
+// CreateEvent 创建新的预测事件（基于新表结构）
+// 逻辑流程：
+// 1. 开启事务
+// 2. 插入 event 表
+// 3. 插入 event_language 表
+// 4. 插入 sub_event 表
+// 5. 插入 sub_event_direction 表
+// 6. 提交事务
 func (h *HandlerSvc) CreateEvent(req *models.CreateEventRequest) (*models.CreateEventResponse, error) {
-	// Validate request
-	if err := h.validateCreateEventRequest(req); err != nil {
+	// 验证请求
+	if err := h.validateCreateEventNewRequest(req); err != nil {
 		return nil, err
 	}
 
 	var response *models.CreateEventResponse
-	var eventDB = backend.NewEventDB()
+	repo := backend.NewEventRepository()
 
-	// Execute all operations in a transaction
+	// 在事务中执行所有操作
 	err := h.db.Transaction(func(txDB *database.DB) error {
-		now := backend.CurrentTimestamp()
-		eventGUID := backend.GenerateCompactUUID()
+		db := txDB.GetGorm()
 
-		// Step 1: Create Event
+		// Step 1: 创建 Event（GUID 由数据库自动生成）
 		event := &backend.Event{
-			GUID:        eventGUID,
-			Title:       req.Title,
-			Description: req.Description,
-			ImageURL:    req.ImageURL,
-			StartDate:   req.StartDate,
-			EndDate:     req.EndDate,
-			Created:     now,
-			Updated:     now,
+			CategoryGUID:         req.CategoryGUID,
+			EcosystemGUID:        req.EcosystemGUID,
+			EventPeriodGUID:      req.EventPeriodGUID,
+			MainTeamGroupGUID:    req.MainTeamGroupGUID,
+			ClusterTeamGroupGUID: req.ClusterTeamGroupGUID,
+			MainScore:            "0", // 初始分数为 0
+			ClusterScore:         "0", // 初始分数为 0
+			Logo:                 req.Logo,
+			OrderType:            0,   // 默认为热门话题
+			OrderNum:             "0", // 初始订单数为 0
+			OpenTime:             "",  // 开盘时间稍后设置
+			TradeVolume:          0,   // 初始交易量为 0
+			ExperimentResult:     "",  // 实验结果为空
+			Info:                 backend.JSONB{},
+			IsOnline:             false, // 默认不上线
+			IsLive:               1,     // 默认为未来事件
+			IsSports:             req.IsSports,
+			Stage:                "Q1", // 默认阶段
 		}
-		if err := eventDB.CreateEvent(txDB.GetGorm(), event); err != nil {
+
+		if err := repo.CreateEvent(db, event); err != nil {
 			return fmt.Errorf("failed to create event: %w", err)
 		}
 
-		// Step 2: Process Tags
-		var tagResponses []models.TagResponse
-		for _, tagName := range req.Tags {
-			tag, err := eventDB.GetOrCreateTag(txDB.GetGorm(), tagName)
-			if err != nil {
-				return fmt.Errorf("failed to get or create tag '%s': %w", tagName, err)
-			}
-
-			// Create event-tag association
-			eventTag := &backend.EventTag{
-				EventGUID: eventGUID,
-				TagGUID:   tag.GUID,
-				Created:   now,
-			}
-			if err := eventDB.CreateEventTag(txDB.GetGorm(), eventTag); err != nil {
-				return fmt.Errorf("failed to create event-tag association: %w", err)
-			}
-
-			tagResponses = append(tagResponses, models.TagResponse{
-				GUID:    tag.GUID,
-				Name:    tag.Name,
-				Created: tag.Created,
-				Updated: tag.Updated,
-			})
+		// 获取数据库生成的 GUID
+		if err := db.Where("category_guid = ? AND ecosystem_guid = ? AND event_period_guid = ?",
+			req.CategoryGUID, req.EcosystemGUID, req.EventPeriodGUID).
+			Order("created_at DESC").First(event).Error; err != nil {
+			return fmt.Errorf("failed to retrieve created event: %w", err)
 		}
 
-		// Step 3: Create Sub-Events and Outcomes
+		eventGUID := event.GUID
+
+		// Step 2: 创建 EventLanguage
+		eventLang := &backend.EventLanguage{
+			EventGUID:    eventGUID,
+			LanguageGUID: req.LanguageGUID,
+			Title:        req.Title,
+			Rules:        req.Rules,
+		}
+
+		if err := repo.CreateEventLanguage(db, eventLang); err != nil {
+			return fmt.Errorf("failed to create event language: %w", err)
+		}
+
+		// Step 3 & 4: 创建 SubEvent 和 SubEventDirection
 		var subEventResponses []models.SubEventResponse
 		for _, subEventReq := range req.SubEvents {
-			subEventGUID := backend.GenerateCompactUUID()
-
-			// Create sub-event
+			// 创建子事件
 			subEvent := &backend.SubEvent{
-				GUID:      subEventGUID,
-				EventGUID: eventGUID,
-				Question:  subEventReq.Question,
-				Created:   now,
-				Updated:   now,
-			}
-			if err := eventDB.CreateSubEvent(txDB.GetGorm(), subEvent); err != nil {
-				return fmt.Errorf("failed to create sub-event: %w", err)
+				ParentEventGUID: eventGUID,
+				Title:           subEventReq.Title,
+				Logo:            req.Logo, // 使用事件的 Logo
+				TradeVolume:     0,
 			}
 
-			// Step 4: Create Outcomes for this sub-event
-			var outcomeResponses []models.OutcomeResponse
-			for _, outcomeReq := range subEventReq.Outcomes {
-				outcomeGUID := backend.GenerateCompactUUID()
+			if err := repo.CreateSubEvent(db, subEvent); err != nil {
+				return fmt.Errorf("failed to create sub event: %w", err)
+			}
 
-				outcome := &backend.Outcome{
-					GUID:         outcomeGUID,
+			// 获取数据库生成的 GUID
+			if err := db.Where("parent_event_guid = ? AND title = ?", eventGUID, subEventReq.Title).
+				Order("created_at DESC").First(subEvent).Error; err != nil {
+				return fmt.Errorf("failed to retrieve created sub event: %w", err)
+			}
+
+			subEventGUID := subEvent.GUID
+
+			// 创建子事件方向
+			var directionResponses []models.SubEventDirectionResponse
+			for _, dirReq := range subEventReq.Directions {
+				direction := &backend.SubEventDirection{
 					SubEventGUID: subEventGUID,
-					Name:         outcomeReq.Name,
-					Color:        outcomeReq.Color,
-					Idx:          outcomeReq.Idx,
-					Created:      now,
-					Updated:      now,
-				}
-				if err := eventDB.CreateOutcome(txDB.GetGorm(), outcome); err != nil {
-					return fmt.Errorf("failed to create outcome: %w", err)
+					Direction:    dirReq.Direction,
+					Chance:       dirReq.Chance,
+					NewAskPrice:  "0",
+					NewBidPrice:  "0",
+					Info:         backend.JSONB{},
 				}
 
-				outcomeResponses = append(outcomeResponses, models.OutcomeResponse{
-					GUID:         outcome.GUID,
-					SubEventGUID: outcome.SubEventGUID,
-					Name:         outcome.Name,
-					Color:        outcome.Color,
-					Idx:          outcome.Idx,
-					Created:      outcome.Created,
-					Updated:      outcome.Updated,
+				if err := repo.CreateSubEventDirection(db, direction); err != nil {
+					return fmt.Errorf("failed to create sub event direction: %w", err)
+				}
+
+				// 获取数据库生成的 GUID
+				if err := db.Where("sub_event_guid = ? AND direction = ?", subEventGUID, dirReq.Direction).
+					Order("created_at DESC").First(direction).Error; err != nil {
+					return fmt.Errorf("failed to retrieve created direction: %w", err)
+				}
+
+				directionResponses = append(directionResponses, models.SubEventDirectionResponse{
+					GUID:        direction.GUID,
+					Direction:   direction.Direction,
+					Chance:      direction.Chance,
+					NewAskPrice: direction.NewAskPrice,
+					NewBidPrice: direction.NewBidPrice,
 				})
 			}
 
 			subEventResponses = append(subEventResponses, models.SubEventResponse{
-				GUID:      subEvent.GUID,
-				EventGUID: subEvent.EventGUID,
-				Question:  subEvent.Question,
-				Outcomes:  outcomeResponses,
-				Created:   subEvent.Created,
-				Updated:   subEvent.Updated,
+				GUID:       subEvent.GUID,
+				Title:      subEvent.Title,
+				Logo:       subEvent.Logo,
+				Directions: directionResponses,
 			})
 		}
 
-		// Build response
+		// 构建响应
 		response = &models.CreateEventResponse{
-			GUID:        event.GUID,
-			Title:       event.Title,
-			Description: event.Description,
-			ImageURL:    event.ImageURL,
-			StartDate:   event.StartDate,
-			EndDate:     event.EndDate,
-			Tags:        tagResponses,
-			SubEvents:   subEventResponses,
-			Created:     event.Created,
-			Updated:     event.Updated,
+			GUID:      eventGUID,
+			Title:     req.Title,
+			Rules:     req.Rules,
+			Logo:      req.Logo,
+			SubEvents: subEventResponses,
+			CreatedAt: event.CreatedAt.Format(time.RFC3339),
 		}
 
 		return nil
@@ -145,93 +159,89 @@ func (h *HandlerSvc) CreateEvent(req *models.CreateEventRequest) (*models.Create
 	return response, nil
 }
 
-// validateCreateEventRequest validates the create event request
-func (h *HandlerSvc) validateCreateEventRequest(req *models.CreateEventRequest) error {
-	// Title cannot be empty
-	if req.Title == "" {
-		return fmt.Errorf("title cannot be empty")
-	}
-
-	// Must have at least one sub-event
-	if len(req.SubEvents) == 0 {
-		return fmt.Errorf("at least one sub-event is required")
-	}
-
-	// Each sub-event must have at least two outcomes
-	for i, subEvent := range req.SubEvents {
-		if len(subEvent.Outcomes) < 2 {
-			return fmt.Errorf("sub-event %d must have at least 2 outcomes", i)
-		}
-	}
-
-	// Start date must be before end date
-	if req.StartDate >= req.EndDate {
-		return fmt.Errorf("start_date must be before end_date")
-	}
-
-	return nil
-}
-
-// ListEvents retrieves events with filtering and pagination
+// ListEvents 查询事件列表（基于新表结构，支持多语言）
 func (h *HandlerSvc) ListEvents(req *models.ListEventsRequest) (*models.ListEventsResponse, error) {
-	// Validate and normalize pagination parameters
+	// 验证请求
+	if req.LanguageGUID == "" {
+		return nil, fmt.Errorf("language_guid is required")
+	}
+
+	// 验证和规范化分页参数
 	page, limit := validatePagination(req.Page, req.Limit)
 
-	var eventDB = backend.NewEventDB()
+	repo := backend.NewEventRepository()
+	db := h.db.GetGorm()
 
-	// Retrieve events from database (status filter will be applied after retrieval)
-	events, total, err := eventDB.ListEvents(
-		h.db.GetGorm(),
-		req.Tags,
-		"", // status will be calculated
-		req.Keyword,
-		req.StartTime,
-		req.EndTime,
-		page,
-		limit,
-	)
+	// 查询事件列表
+	events, total, err := repo.ListEvents(db, req.LanguageGUID, req.CategoryGUID, req.IsLive, page, limit)
 	if err != nil {
 		return nil, fmt.Errorf("failed to list events: %w", err)
 	}
 
-	// Build response
+	// 构建响应
 	var eventItems []models.EventListItem
 	for _, event := range events {
-		// Calculate status
-		status := calculateStatus(event.StartDate, event.EndDate)
-
-		// Skip if status filter doesn't match
-		if req.Status != "" && status != req.Status {
+		// 获取事件的多语言信息
+		var eventLang backend.EventLanguage
+		if err := db.Where("event_guid = ? AND language_guid = ?", event.GUID, req.LanguageGUID).
+			First(&eventLang).Error; err != nil {
+			// 如果没有找到对应语言，跳过该事件
 			continue
 		}
 
-		// Get tags for this event
-		tags, err := eventDB.GetEventTags(h.db.GetGorm(), event.GUID)
+		// 获取子事件列表
+		subEvents, err := repo.GetSubEventsByEventGUID(db, event.GUID)
 		if err != nil {
-			return nil, fmt.Errorf("failed to get tags for event %s: %w", event.GUID, err)
+			return nil, fmt.Errorf("failed to get sub events for event %s: %w", event.GUID, err)
 		}
 
-		// Extract tag names
-		tagNames := make([]string, len(tags))
-		for i, tag := range tags {
-			tagNames[i] = tag.Name
+		// 构建子事件响应
+		var subEventResponses []models.SubEventResponse
+		for _, subEvent := range subEvents {
+			// 获取子事件方向
+			directions, err := repo.GetSubEventDirections(db, subEvent.GUID)
+			if err != nil {
+				return nil, fmt.Errorf("failed to get directions for sub event %s: %w", subEvent.GUID, err)
+			}
+
+			// 构建方向响应
+			var directionResponses []models.SubEventDirectionResponse
+			for _, dir := range directions {
+				directionResponses = append(directionResponses, models.SubEventDirectionResponse{
+					GUID:        dir.GUID,
+					Direction:   dir.Direction,
+					Chance:      dir.Chance,
+					NewAskPrice: dir.NewAskPrice,
+					NewBidPrice: dir.NewBidPrice,
+				})
+			}
+
+			subEventResponses = append(subEventResponses, models.SubEventResponse{
+				GUID:       subEvent.GUID,
+				Title:      subEvent.Title,
+				Logo:       subEvent.Logo,
+				Directions: directionResponses,
+			})
 		}
 
 		eventItems = append(eventItems, models.EventListItem{
-			GUID:        event.GUID,
-			Title:       event.Title,
-			Description: event.Description,
-			ImageURL:    event.ImageURL,
-			StartDate:   event.StartDate,
-			EndDate:     event.EndDate,
-			Status:      status,
-			Tags:        tagNames,
-			Created:     event.Created,
-			Updated:     event.Updated,
+			GUID:            event.GUID,
+			Title:           eventLang.Title,
+			Rules:           eventLang.Rules,
+			Logo:            event.Logo,
+			CategoryGUID:    event.CategoryGUID,
+			EcosystemGUID:   event.EcosystemGUID,
+			EventPeriodGUID: event.EventPeriodGUID,
+			IsLive:          event.IsLive,
+			IsSports:        event.IsSports,
+			OpenTime:        event.OpenTime,
+			TradeVolume:     event.TradeVolume,
+			SubEvents:       subEventResponses,
+			CreatedAt:       event.CreatedAt.Format(time.RFC3339),
 		})
 	}
 
-	// Calculate pagination info
+	// 计算分页信息
 	totalPages := int(total) / limit
 	if int(total)%limit > 0 {
 		totalPages++
@@ -250,106 +260,51 @@ func (h *HandlerSvc) ListEvents(req *models.ListEventsRequest) (*models.ListEven
 	return response, nil
 }
 
-// GetEventDetail retrieves full event details including sub-events and outcomes
-func (h *HandlerSvc) GetEventDetail(guid string) (*models.GetEventDetailResponse, error) {
-	var eventDB = backend.NewEventDB()
-
-	// Get event
-	event, err := eventDB.GetEventByGUID(h.db.GetGorm(), guid)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get event: %w", err)
+// validateCreateEventNewRequest 验证创建事件请求
+func (h *HandlerSvc) validateCreateEventNewRequest(req *models.CreateEventRequest) error {
+	if req.CategoryGUID == "" {
+		return fmt.Errorf("category_guid is required")
+	}
+	if req.EcosystemGUID == "" {
+		return fmt.Errorf("ecosystem_guid is required")
+	}
+	if req.EventPeriodGUID == "" {
+		return fmt.Errorf("event_period_guid is required")
+	}
+	if req.Title == "" {
+		return fmt.Errorf("title is required")
+	}
+	if req.LanguageGUID == "" {
+		return fmt.Errorf("language_guid is required")
+	}
+	if len(req.SubEvents) == 0 {
+		return fmt.Errorf("at least one sub_event is required")
 	}
 
-	// Calculate status
-	status := calculateStatus(event.StartDate, event.EndDate)
-
-	// Get tags
-	tags, err := eventDB.GetEventTags(h.db.GetGorm(), event.GUID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get tags: %w", err)
-	}
-
-	// Extract tag names
-	tagNames := make([]string, len(tags))
-	for i, tag := range tags {
-		tagNames[i] = tag.Name
-	}
-
-	// Get sub-events
-	subEvents, err := eventDB.GetEventSubEvents(h.db.GetGorm(), event.GUID)
-	if err != nil {
-		return nil, fmt.Errorf("failed to get sub-events: %w", err)
-	}
-
-	// Build sub-events response with outcomes
-	var subEventResponses []models.SubEventResponse
-	for _, subEvent := range subEvents {
-		// Get outcomes for this sub-event
-		outcomes, err := eventDB.GetSubEventOutcomes(h.db.GetGorm(), subEvent.GUID)
-		if err != nil {
-			return nil, fmt.Errorf("failed to get outcomes for sub-event %s: %w", subEvent.GUID, err)
+	// 验证每个子事件至少有两个方向
+	for i, subEvent := range req.SubEvents {
+		if len(subEvent.Directions) < 2 {
+			return fmt.Errorf("sub_event %d must have at least 2 directions", i)
 		}
-
-		// Build outcomes response
-		var outcomeResponses []models.OutcomeResponse
-		for _, outcome := range outcomes {
-			outcomeResponses = append(outcomeResponses, models.OutcomeResponse{
-				GUID:         outcome.GUID,
-				SubEventGUID: outcome.SubEventGUID,
-				Name:         outcome.Name,
-				Color:        outcome.Color,
-				Idx:          outcome.Idx,
-				Created:      outcome.Created,
-				Updated:      outcome.Updated,
-			})
-		}
-
-		subEventResponses = append(subEventResponses, models.SubEventResponse{
-			GUID:      subEvent.GUID,
-			EventGUID: subEvent.EventGUID,
-			Question:  subEvent.Question,
-			Outcomes:  outcomeResponses,
-			Created:   subEvent.Created,
-			Updated:   subEvent.Updated,
-		})
 	}
 
-	// Build response
-	response := &models.GetEventDetailResponse{
-		GUID:        event.GUID,
-		Title:       event.Title,
-		Description: event.Description,
-		ImageURL:    event.ImageURL,
-		StartDate:   event.StartDate,
-		EndDate:     event.EndDate,
-		Status:      status,
-		Tags:        tagNames,
-		SubEvents:   subEventResponses,
-		Created:     event.Created,
-		Updated:     event.Updated,
-	}
-
-	return response, nil
+	return nil
 }
 
-// calculateStatus determines event status based on current time
-func calculateStatus(startDate, endDate int64) string {
-	now := backend.CurrentTimestamp()
-	if now < startDate {
-		return "upcoming"
-	} else if now >= startDate && now <= endDate {
-		return "active"
-	}
-	return "ended"
-}
-
-// validatePagination validates and normalizes pagination parameters
+// validatePagination 验证和规范化分页参数
 func validatePagination(page, limit int) (int, int) {
+	// 默认页码为 1
 	if page < 1 {
 		page = 1
 	}
-	if limit < 1 || limit > 100 {
+
+	// 默认每页 20 条，最大 100 条
+	if limit < 1 {
 		limit = 20
 	}
+	if limit > 100 {
+		limit = 100
+	}
+
 	return page, limit
 }
