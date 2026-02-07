@@ -1,4 +1,4 @@
-package statusCode
+package status_code
 
 const (
 	ThisUserNameDontExist = 1000

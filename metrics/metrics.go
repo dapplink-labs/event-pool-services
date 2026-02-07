@@ -6,21 +6,21 @@ import (
 	"github.com/prometheus/client_golang/prometheus"
 )
 
-type PhoenixMetricer interface {
+type EventPoolMetricer interface {
 	RecordChainBlockHeight(chainId string, height *big.Int)
 	RecordEventBlockHeight(chainId string, height *big.Int)
 	RecordNativeTokenBalance(chainId string, balance *big.Int)
 	RecordChainAddressNonce(chainId string, nonce *big.Int)
 }
 
-type PhoenixMetrics struct {
+type EventPoolMetrics struct {
 	chainBlockHeight   *prometheus.GaugeVec
 	eventBlockHeight   *prometheus.GaugeVec
 	nativeTokenBalance *prometheus.GaugeVec
 	chainAddressNonce  *prometheus.GaugeVec
 }
 
-func NewPhoenixMetrics(registry *prometheus.Registry, subsystem string) *PhoenixMetrics {
+func NewEventPoolMetrics(registry *prometheus.Registry, subsystem string) *EventPoolMetrics {
 	chainBlockHeight := prometheus.NewGaugeVec(prometheus.GaugeOpts{
 		Name:      "chain_block_height",
 		Help:      "Different chain block height",
@@ -50,7 +50,7 @@ func NewPhoenixMetrics(registry *prometheus.Registry, subsystem string) *Phoenix
 	registry.MustRegister(nativeTokenBalance)
 	registry.MustRegister(chainAddressNonce)
 
-	return &PhoenixMetrics{
+	return &EventPoolMetrics{
 		chainBlockHeight:   chainBlockHeight,
 		eventBlockHeight:   eventBlockHeight,
 		nativeTokenBalance: nativeTokenBalance,
@@ -58,18 +58,18 @@ func NewPhoenixMetrics(registry *prometheus.Registry, subsystem string) *Phoenix
 	}
 }
 
-func (rm *PhoenixMetrics) RecordChainBlockHeight(chainId string, height *big.Int) {
+func (rm *EventPoolMetrics) RecordChainBlockHeight(chainId string, height *big.Int) {
 	rm.chainBlockHeight.WithLabelValues(chainId).Set(float64(height.Uint64()))
 }
 
-func (rm *PhoenixMetrics) RecordEventBlockHeight(chainId string, height *big.Int) {
+func (rm *EventPoolMetrics) RecordEventBlockHeight(chainId string, height *big.Int) {
 	rm.eventBlockHeight.WithLabelValues(chainId).Set(float64(height.Uint64()))
 }
 
-func (rm *PhoenixMetrics) RecordNativeTokenBalance(chainId string, balance *big.Int) {
+func (rm *EventPoolMetrics) RecordNativeTokenBalance(chainId string, balance *big.Int) {
 	rm.nativeTokenBalance.WithLabelValues(chainId).Set(float64(balance.Uint64()))
 }
 
-func (rm *PhoenixMetrics) RecordChainAddressNonce(chainId string, nonce *big.Int) {
+func (rm *EventPoolMetrics) RecordChainAddressNonce(chainId string, nonce *big.Int) {
 	rm.chainAddressNonce.WithLabelValues(chainId).Set(float64(nonce.Uint64()))
 }

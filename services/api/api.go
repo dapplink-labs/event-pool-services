@@ -87,11 +87,6 @@ func (a *API) initRouter(ctx context.Context, cfg *config.Config) {
 		log.Error("failed to create email service", "err", err)
 	}
 
-	smsService, err := common2.NewSMSService(&cfg.SMSConfig)
-	if err != nil {
-		log.Error("failed to create sms service", "err", err)
-	}
-
 	authenticatorService := common2.NewAuthenticatorService("PHOENIX")
 
 	var kodoService *common2.KodoService
@@ -120,7 +115,7 @@ func (a *API) initRouter(ctx context.Context, cfg *config.Config) {
 		log.Info("minio service initialized successfully")
 	}
 
-	svc := service.New(v, a.db, emailService, smsService, authenticatorService, kodoService, s3Service, minioService, cfg.JWTSecret, cfg.Domain)
+	svc := service.New(v, a.db, emailService, authenticatorService, kodoService, s3Service, minioService, cfg.JWTSecret, cfg.Domain)
 	apiRouter := chi.NewRouter()
 
 	// Add all middlewares BEFORE registering routes

@@ -20,7 +20,7 @@ import (
 var (
 	ConfigFlag = &cli.StringFlag{
 		Name:    "config",
-		Value:   "./phoenix-services-config.local.yaml",
+		Value:   "./event-pool-services-config.local.yaml",
 		Aliases: []string{"c"},
 		Usage:   "path to config file",
 		EnvVars: []string{"PHOENIX_SERVICES_CONFIG"},
@@ -55,14 +55,14 @@ func runMigrations(ctx *cli.Context) error {
 	return db.ExecuteSQLMigration(cfg.Migrations)
 }
 
-func runPhoenixNode(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
-	log.Info("running phoenix node...")
+func runEventPool(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
+	log.Info("running event pool node...")
 	cfg, err := config.New(ctx.String(ConfigFlag.Name))
 	if err != nil {
 		log.Error("failed to load config", "err", err)
 		return nil, err
 	}
-	return relayer_node.NewPhoenixNode(ctx.Context, cfg, shutdown)
+	return relayer_node.NewEventPool(ctx.Context, cfg, shutdown)
 }
 
 func runApi(ctx *cli.Context, _ context.CancelCauseFunc) (cliapp.Lifecycle, error) {
@@ -125,7 +125,7 @@ func NewCli() *cli.App {
 				Name:        "index",
 				Flags:       flags,
 				Description: "Run event node task",
-				Action:      cliapp.LifecycleCmd(runPhoenixNode),
+				Action:      cliapp.LifecycleCmd(runEventPool),
 			},
 			{
 				Name:        "rpc",

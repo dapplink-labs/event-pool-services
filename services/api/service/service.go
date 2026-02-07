@@ -29,7 +29,6 @@ type HandlerSvc struct {
 	v                    *validator.Validator
 	db                   *database.DB
 	emailService         *common.EmailService
-	smsService           *common.SMSService
 	authenticatorService *common.AuthenticatorService
 	verificationManager  *common.VerificationCodeManager
 	siweVerifier         *common.SIWEVerifier
@@ -42,7 +41,6 @@ type HandlerSvc struct {
 func New(v *validator.Validator,
 	db *database.DB,
 	emailService *common.EmailService,
-	smsService *common.SMSService,
 	authenticatorService *common.AuthenticatorService,
 	kodoService *common.KodoService,
 	s3Service *common.S3Service,
@@ -54,7 +52,6 @@ func New(v *validator.Validator,
 		v:                    v,
 		db:                   db,
 		emailService:         emailService,
-		smsService:           smsService,
 		authenticatorService: authenticatorService,
 		verificationManager:  common.NewVerificationCodeManager(),
 		kodoService:          kodoService,

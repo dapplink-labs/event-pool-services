@@ -1,0 +1,170 @@
+package relayer_node
+
+import (
+	"context"
+	"errors"
+	"fmt"
+	"net"
+	"strconv"
+	"sync/atomic"
+	"time"
+
+	"github.com/go-chi/chi/v5"
+	"github.com/prometheus/client_golang/prometheus"
+
+	"github.com/ethereum/go-ethereum/log"
+
+	"github.com/multimarket-labs/event-pod-services/common/httputil"
+	"github.com/multimarket-labs/event-pod-services/config"
+	"github.com/multimarket-labs/event-pod-services/crawler"
+	"github.com/multimarket-labs/event-pod-services/database"
+	"github.com/multimarket-labs/event-pod-services/metrics"
+)
+
+type EventPool struct {
+	DB               *database.DB
+	metricsServer    *httputil.HTTPServer
+	metricsRegistry  *prometheus.Registry
+	eventPoolMetrics *metrics.EventPoolMetrics
+	Crawler          *crawler.Crawler
+	wsServer         *httputil.HTTPServer
+	shutdown         context.CancelCauseFunc
+	stopped          atomic.Bool
+	chainIdList      []uint64
+}
+
+type RpcServerConfig struct {
+	GrpcHostname string
+	GrpcPort     int
+}
+
+func NewEventPool(ctx context.Context, cfg *config.Config, shutdown context.CancelCauseFunc) (*EventPool, error) {
+	log.Info("New event pool services start️ 🕖")
+
+	metricsRegistry := metrics.NewRegistry()
+
+	EventPoolMetrics := metrics.NewEventPoolMetrics(metricsRegistry, "eventPool")
+
+	out := &EventPool{
+		metricsRegistry:  metricsRegistry,
+		eventPoolMetrics: EventPoolMetrics,
+		shutdown:         shutdown,
+	}
+	if err := out.initFromConfig(ctx, cfg); err != nil {
+		return nil, errors.Join(err, out.Stop(ctx))
+	}
+	log.Info("new event pool services success🏅️")
+	return out, nil
+}
+
+func (as *EventPool) Start(ctx context.Context) error {
+	errWorker := as.Crawler.Start()
+	if errWorker != nil {
+		log.Error("start crawler handle fail", "err", errWorker)
+		return errWorker
+	}
+	return nil
+}
+
+func (as *EventPool) Stop(ctx context.Context) error {
+	var result error
+	if as.DB != nil {
+		if err := as.DB.Close(); err != nil {
+			result = errors.Join(result, fmt.Errorf("failed to close DB: %w", err))
+		}
+	}
+
+	if as.metricsServer != nil {
+		if err := as.metricsServer.Close(); err != nil {
+			result = errors.Join(result, fmt.Errorf("failed to close metrics server: %w", err))
+		}
+	}
+
+	if as.wsServer != nil {
+		if err := as.wsServer.Stop(ctx); err != nil {
+			result = errors.Join(result, fmt.Errorf("failed to stop WebSocket server: %w", err))
+		}
+	}
+
+	as.stopped.Store(true)
+
+	log.Info("event pool services stopped")
+
+	return result
+}
+
+func (as *EventPool) Stopped() bool {
+	return as.stopped.Load()
+}
+
+func (as *EventPool) initFromConfig(ctx context.Context, cfg *config.Config) error {
+	if err := as.initDB(ctx, cfg.MasterDB); err != nil {
+		return fmt.Errorf("failed to init DB: %w", err)
+	}
+
+	if err := as.startWebSocketServer(cfg.WebsocketServer); err != nil {
+		return fmt.Errorf("failed to start web socket server: %w", err)
+	}
+
+	if err := as.initWorker(cfg); err != nil {
+		return fmt.Errorf("failed to init crawler processor: %w", err)
+	}
+
+	err := as.startMetricsServer(cfg.MetricsServer)
+	if err != nil {
+		log.Error("start metrics server fail", "err", err)
+		return err
+	}
+	return nil
+}
+
+func (as *EventPool) startWebSocketServer(serverConfig config.ServerConfig) error {
+	addr := net.JoinHostPort(serverConfig.Host, strconv.Itoa(serverConfig.Port))
+
+	wsRouter := chi.NewRouter()
+
+	srv, err := httputil.StartHTTPServer(addr, wsRouter)
+	if err != nil {
+		return fmt.Errorf("failed to start WebSocket server: %w", err)
+	}
+	log.Info("WebSocket server started", "addr", srv.Addr().String())
+	as.wsServer = srv
+	return nil
+}
+
+func (as *EventPool) initDB(ctx context.Context, cfg config.DBConfig) error {
+	db, err := database.NewDB(ctx, cfg)
+	if err != nil {
+		return fmt.Errorf("failed to connect to database: %w", err)
+	}
+	as.DB = db
+	log.Info("Init database success")
+	return nil
+}
+
+func (as *EventPool) initWorker(config *config.Config) error {
+	var chainIds []string
+	for i := range config.RPCs {
+		chainIds = append(chainIds, strconv.Itoa(int(config.RPCs[i].ChainId)))
+	}
+	wkConfig := &crawler.CrawlerConfig{
+		LoopInterval: time.Second * 5,
+		ChainIds:     chainIds,
+	}
+	workerHandle, err := crawler.NewCrawler(as.DB, wkConfig)
+	if err != nil {
+		return err
+	}
+	as.Crawler = workerHandle
+	return nil
+}
+
+func (as *EventPool) startMetricsServer(cfg config.ServerConfig) error {
+	srv, err := metrics.StartServer(as.metricsRegistry, cfg.Host, cfg.Port)
+	if err != nil {
+		return fmt.Errorf("metrics server failed to start: %w", err)
+	}
+	as.metricsServer = srv
+	log.Info("metrics server started", "port", cfg.Port, "addr", srv.Addr())
+	return nil
+}

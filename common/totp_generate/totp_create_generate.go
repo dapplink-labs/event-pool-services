@@ -1,12 +1,13 @@
-package totpGenerate
+package totp_generate
 
 import (
 	"bytes"
 	"encoding/base64"
-	"github.com/pquerna/otp"
-	"github.com/pquerna/otp/totp"
 	"image/png"
 	"log"
+
+	"github.com/pquerna/otp"
+	"github.com/pquerna/otp/totp"
 )
 
 func GenerateTOTP(account string) (key *otp.Key, imgReturnBase64 string, err error) {
