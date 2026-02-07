@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/multimarket-labs/event-pod-services/database"
-	"github.com/multimarket-labs/event-pod-services/database/backend"
 	"github.com/multimarket-labs/event-pod-services/services/api/models"
 )
 
@@ -24,14 +23,14 @@ func (h *HandlerSvc) CreateEvent(req *models.CreateEventRequest) (*models.Create
 	}
 
 	var response *models.CreateEventResponse
-	repo := backend.NewEventRepository()
+	repo := database.NewEventRepository()
 
 	// 在事务中执行所有操作
 	err := h.db.Transaction(func(txDB *database.DB) error {
 		db := txDB.GetGorm()
 
 		// Step 1: 创建 Event（GUID 由数据库自动生成）
-		event := &backend.Event{
+		event := &database.Event{
 			CategoryGUID:         req.CategoryGUID,
 			EcosystemGUID:        req.EcosystemGUID,
 			EventPeriodGUID:      req.EventPeriodGUID,
@@ -45,7 +44,7 @@ func (h *HandlerSvc) CreateEvent(req *models.CreateEventRequest) (*models.Create
 			OpenTime:             "",  // 开盘时间稍后设置
 			TradeVolume:          0,   // 初始交易量为 0
 			ExperimentResult:     "",  // 实验结果为空
-			Info:                 backend.JSONB{},
+			Info:                 database.JSONB{},
 			IsOnline:             false, // 默认不上线
 			IsLive:               1,     // 默认为未来事件
 			IsSports:             req.IsSports,
@@ -66,7 +65,7 @@ func (h *HandlerSvc) CreateEvent(req *models.CreateEventRequest) (*models.Create
 		eventGUID := event.GUID
 
 		// Step 2: 创建 EventLanguage
-		eventLang := &backend.EventLanguage{
+		eventLang := &database.EventLanguage{
 			EventGUID:    eventGUID,
 			LanguageGUID: req.LanguageGUID,
 			Title:        req.Title,
@@ -81,7 +80,7 @@ func (h *HandlerSvc) CreateEvent(req *models.CreateEventRequest) (*models.Create
 		var subEventResponses []models.SubEventResponse
 		for _, subEventReq := range req.SubEvents {
 			// 创建子事件
-			subEvent := &backend.SubEvent{
+			subEvent := &database.SubEvent{
 				ParentEventGUID: eventGUID,
 				Title:           subEventReq.Title,
 				Logo:            req.Logo, // 使用事件的 Logo
@@ -103,13 +102,13 @@ func (h *HandlerSvc) CreateEvent(req *models.CreateEventRequest) (*models.Create
 			// 创建子事件方向
 			var directionResponses []models.SubEventDirectionResponse
 			for _, dirReq := range subEventReq.Directions {
-				direction := &backend.SubEventDirection{
+				direction := &database.SubEventDirection{
 					SubEventGUID: subEventGUID,
 					Direction:    dirReq.Direction,
 					Chance:       dirReq.Chance,
 					NewAskPrice:  "0",
 					NewBidPrice:  "0",
-					Info:         backend.JSONB{},
+					Info:         database.JSONB{},
 				}
 
 				if err := repo.CreateSubEventDirection(db, direction); err != nil {
@@ -169,7 +168,7 @@ func (h *HandlerSvc) ListEvents(req *models.ListEventsRequest) (*models.ListEven
 	// 验证和规范化分页参数
 	page, limit := validatePagination(req.Page, req.Limit)
 
-	repo := backend.NewEventRepository()
+	repo := database.NewEventRepository()
 	db := h.db.GetGorm()
 
 	// 查询事件列表
@@ -182,7 +181,7 @@ func (h *HandlerSvc) ListEvents(req *models.ListEventsRequest) (*models.ListEven
 	var eventItems []models.EventListItem
 	for _, event := range events {
 		// 获取事件的多语言信息
-		var eventLang backend.EventLanguage
+		var eventLang database.EventLanguage
 		if err := db.Where("event_guid = ? AND language_guid = ?", event.GUID, req.LanguageGUID).
 			First(&eventLang).Error; err != nil {
 			// 如果没有找到对应语言，跳过该事件
