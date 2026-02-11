@@ -1,23 +1,18 @@
 package database
 
-import "time"
+import (
+	"errors"
+	"time"
 
-// Languages 支持的语言表
-type Languages struct {
-	GUID         string    `gorm:"type:text;primaryKey;default:replace(uuid_generate_v4()::text, '-', '')" json:"guid"`
-	LanguageName string    `gorm:"type:varchar;default:'zh'" json:"language_name"`
-	CreatedAt    time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt    time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"updated_at"`
-}
+	"gorm.io/gorm"
+)
 
-func (Languages) TableName() string {
-	return "languages"
-}
-
-// Category 事件分类表
 type Category struct {
 	GUID      string    `gorm:"type:text;primaryKey;default:replace(uuid_generate_v4()::text, '-', '')" json:"guid"`
+	Code      string    `gorm:"type:varchar(64)" json:"code"`
+	SortOrder int       `gorm:"type:integer;not null;default:0" json:"sort_order"`
 	IsActive  bool      `gorm:"type:boolean;not null;default:true" json:"is_active"`
+	Remark    string    `gorm:"type:varchar(200)" json:"remark"`
 	CreatedAt time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"updated_at"`
 }
@@ -26,7 +21,6 @@ func (Category) TableName() string {
 	return "category"
 }
 
-// CategoryLanguage 事件分类多语言表
 type CategoryLanguage struct {
 	GUID               string    `gorm:"type:text;primaryKey;default:replace(uuid_generate_v4()::text, '-', '')" json:"guid"`
 	LanguageGUID       string    `gorm:"type:varchar(255);not null" json:"language_guid"`
@@ -43,83 +37,130 @@ func (CategoryLanguage) TableName() string {
 	return "category_language"
 }
 
-// Ecosystem 所属生态
-type Ecosystem struct {
-	GUID         string    `gorm:"type:text;primaryKey;default:replace(uuid_generate_v4()::text, '-', '')" json:"guid"`
-	CategoryGUID string    `gorm:"type:varchar(255);not null" json:"category_guid"`
-	EventNum     string    `gorm:"type:numeric;not null" json:"event_num"` // UINT256 mapped to string for large numbers
-	IsActive     bool      `gorm:"type:boolean;not null;default:true" json:"is_active"`
-	CreatedAt    time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt    time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"updated_at"`
+type CategoryView interface {
+	GetCategoryByGUID(guid string) (*Category, error)
+	GetCategoryByCode(code string) (*Category, error)
+	QueryCategories(filter *Category) ([]Category, error)
+	QueryActiveCategories() ([]Category, error)
+	GetCategoryLanguage(categoryGUID, languageGUID string) (*CategoryLanguage, error)
+	QueryCategoryLanguages(categoryGUID string) ([]CategoryLanguage, error)
 }
 
-func (Ecosystem) TableName() string {
-	return "ecosystem"
+type CategoryDB interface {
+	CategoryView
+	CreateCategory(category *Category) error
+	UpdateCategory(category *Category) error
+	DeleteCategory(guid string) error
+	CreateCategoryLanguage(categoryLang *CategoryLanguage) error
+	UpdateCategoryLanguage(categoryLang *CategoryLanguage) error
+	DeleteCategoryLanguage(guid string) error
 }
 
-// EcosystemLanguage 所属生态多语言表
-type EcosystemLanguage struct {
-	GUID          string    `gorm:"type:text;primaryKey;default:replace(uuid_generate_v4()::text, '-', '')" json:"guid"`
-	LanguageGUID  string    `gorm:"type:varchar(255);not null" json:"language_guid"`
-	EcosystemGUID string    `gorm:"type:varchar(255);not null" json:"ecosystem_guid"`
-	Name          string    `gorm:"type:varchar(50);not null" json:"name"`
-	Description   string    `gorm:"type:varchar(200);not null" json:"description"`
-	CreatedAt     time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt     time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"updated_at"`
+type categoryDB struct {
+	gorm *gorm.DB
 }
 
-func (EcosystemLanguage) TableName() string {
-	return "ecosystem_language"
+func NewCategoryDB(db *gorm.DB) CategoryDB {
+	return &categoryDB{gorm: db}
 }
 
-// EventPeriod 时间标签表
-type EventPeriod struct {
-	GUID         string    `gorm:"type:text;primaryKey;default:replace(uuid_generate_v4()::text, '-', '')" json:"guid"`
-	CategoryGUID string    `gorm:"type:varchar(255);not null" json:"category_guid"`
-	IsActive     bool      `gorm:"type:boolean;not null;default:true" json:"is_active"`
-	CreatedAt    time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt    time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"updated_at"`
+func (db *categoryDB) GetCategoryByGUID(guid string) (*Category, error) {
+	var category Category
+	result := db.gorm.Where("guid = ?", guid).First(&category)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &category, nil
 }
 
-func (EventPeriod) TableName() string {
-	return "event_period"
+func (db *categoryDB) GetCategoryByCode(code string) (*Category, error) {
+	var category Category
+	result := db.gorm.Where("code = ?", code).First(&category)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &category, nil
 }
 
-// EventPeriodLanguage 时间标签表多语言表
-type EventPeriodLanguage struct {
-	GUID            string    `gorm:"type:text;primaryKey;default:replace(uuid_generate_v4()::text, '-', '')" json:"guid"`
-	EventPeriodGUID string    `gorm:"type:varchar(255);not null" json:"event_period_guid"`
-	LanguageGUID    string    `gorm:"type:varchar(255);not null" json:"language_guid"`
-	Name            string    `gorm:"type:varchar(50);not null" json:"name"`
-	CreatedAt       time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt       time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"updated_at"`
+func (db *categoryDB) QueryCategories(filter *Category) ([]Category, error) {
+	var categories []Category
+	query := db.gorm.Model(&Category{})
+	if filter != nil {
+		if filter.Code != "" {
+			query = query.Where("code = ?", filter.Code)
+		}
+		if filter.IsActive {
+			query = query.Where("is_active = ?", filter.IsActive)
+		}
+	}
+	result := query.Order("sort_order ASC, created_at DESC").Find(&categories)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return categories, nil
 }
 
-func (EventPeriodLanguage) TableName() string {
-	return "event_period_language"
+func (db *categoryDB) QueryActiveCategories() ([]Category, error) {
+	var categories []Category
+	result := db.gorm.Where("is_active = ?", true).
+		Order("sort_order ASC, created_at DESC").
+		Find(&categories)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return categories, nil
 }
 
-// TeamGroup 运动类团队
-type TeamGroup struct {
-	GUID      string    `gorm:"type:text;primaryKey;default:replace(uuid_generate_v4()::text, '-', '')" json:"guid"`
-	Logo      string    `gorm:"type:varchar(255);not null" json:"logo"`
-	CreatedAt time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"updated_at"`
+func (db *categoryDB) CreateCategory(category *Category) error {
+	return db.gorm.Create(category).Error
 }
 
-func (TeamGroup) TableName() string {
-	return "team_group"
+func (db *categoryDB) UpdateCategory(category *Category) error {
+	return db.gorm.Model(&Category{}).Where("guid = ?", category.GUID).Updates(category).Error
 }
 
-// TeamGroupLanguage 运动类团队多语言表
-type TeamGroupLanguage struct {
-	GUID          string    `gorm:"type:text;primaryKey;default:replace(uuid_generate_v4()::text, '-', '')" json:"guid"`
-	TeamGroupGUID string    `gorm:"type:varchar(255);not null" json:"team_group_guid"`
-	Name          string    `gorm:"type:varchar(255);not null" json:"name"`
-	CreatedAt     time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"created_at"`
-	UpdatedAt     time.Time `gorm:"type:timestamp(0);default:CURRENT_TIMESTAMP" json:"updated_at"`
+func (db *categoryDB) DeleteCategory(guid string) error {
+	return db.gorm.Where("guid = ?", guid).Delete(&Category{}).Error
 }
 
-func (TeamGroupLanguage) TableName() string {
-	return "team_group_language"
+func (db *categoryDB) GetCategoryLanguage(categoryGUID, languageGUID string) (*CategoryLanguage, error) {
+	var categoryLang CategoryLanguage
+	result := db.gorm.Where("category_guid = ? AND language_guid = ?", categoryGUID, languageGUID).
+		First(&categoryLang)
+	if result.Error != nil {
+		if errors.Is(result.Error, gorm.ErrRecordNotFound) {
+			return nil, nil
+		}
+		return nil, result.Error
+	}
+	return &categoryLang, nil
+}
+
+func (db *categoryDB) QueryCategoryLanguages(categoryGUID string) ([]CategoryLanguage, error) {
+	var categoryLangs []CategoryLanguage
+	result := db.gorm.Where("category_guid = ?", categoryGUID).
+		Order("created_at ASC").
+		Find(&categoryLangs)
+	if result.Error != nil {
+		return nil, result.Error
+	}
+	return categoryLangs, nil
+}
+
+func (db *categoryDB) CreateCategoryLanguage(categoryLang *CategoryLanguage) error {
+	return db.gorm.Create(categoryLang).Error
+}
+
+func (db *categoryDB) UpdateCategoryLanguage(categoryLang *CategoryLanguage) error {
+	return db.gorm.Model(&CategoryLanguage{}).Where("guid = ?", categoryLang.GUID).Updates(categoryLang).Error
+}
+
+func (db *categoryDB) DeleteCategoryLanguage(guid string) error {
+	return db.gorm.Where("guid = ?", guid).Delete(&CategoryLanguage{}).Error
 }

@@ -5,7 +5,7 @@
 *.so
 *.dylib
 /event-services
-/event-pod-services
+/event-pool-services
 
 # Test binary, built with `go test -c`
 *.test

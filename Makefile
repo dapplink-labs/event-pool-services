@@ -1,7 +1,7 @@
 RRM_ABI_ARTIFACT := ./abis/ReferralRewardManager.sol/ReferralRewardManager.json
 
-event-pod-services:
-	env GO111MODULE=on go build -v $(LDFLAGS) ./cmd/event-pod-services
+event-pool-services:
+	env GO111MODULE=on go build -v $(LDFLAGS) ./cmd/event-pool-services
 
 clean:
 	rm event-pod-services
@@ -31,7 +31,7 @@ binding-rrm:
 		rm $(temp)
 
 .PHONY: \
-	event-pod-services \
+	event-pool-services \
 	bindings \
 	binding-rrm \
 	clean \

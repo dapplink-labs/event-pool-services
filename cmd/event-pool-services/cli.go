@@ -14,6 +14,7 @@ import (
 	"github.com/multimarket-labs/event-pod-services/database"
 	"github.com/multimarket-labs/event-pod-services/elasticsearch"
 	"github.com/multimarket-labs/event-pod-services/services/api"
+	"github.com/multimarket-labs/event-pod-services/services/common"
 	grpc "github.com/multimarket-labs/event-pod-services/services/gprc"
 )
 
@@ -53,6 +54,36 @@ func runMigrations(ctx *cli.Context) error {
 		}
 	}(db)
 	return db.ExecuteSQLMigration(cfg.Migrations)
+}
+
+func runInitDatabase(ctx *cli.Context) error {
+	ctx.Context = opio.CancelOnInterrupt(ctx.Context)
+	log.Info("初始化数据库基础数据...")
+	cfg, err := config.New(ctx.String(ConfigFlag.Name))
+	if err != nil {
+		log.Error("failed to load config", "err", err)
+		return err
+	}
+	db, err := database.NewDB(ctx.Context, cfg.MasterDB)
+	if err != nil {
+		log.Error("failed to connect to database", "err", err)
+		return err
+	}
+	defer func(db *database.DB) {
+		err := db.Close()
+		if err != nil {
+			log.Error("fail to close database", "err", err)
+		}
+	}(db)
+
+	initService := common.NewInitService(db)
+	if err := initService.InitDatabase(); err != nil {
+		log.Error("初始化数据库失败", "err", err)
+		return err
+	}
+
+	log.Info("数据库基础数据初始化完成")
+	return nil
 }
 
 func runEventPool(ctx *cli.Context, shutdown context.CancelCauseFunc) (cliapp.Lifecycle, error) {
@@ -138,6 +169,12 @@ func NewCli() *cli.App {
 				Flags:       migrationFlags,
 				Description: "Run event database migrations",
 				Action:      runMigrations,
+			},
+			{
+				Name:        "init-db",
+				Flags:       flags,
+				Description: "Initialize database with default data (languages, categories, ecosystems)",
+				Action:      runInitDatabase,
 			},
 			{
 				Name:        "version",

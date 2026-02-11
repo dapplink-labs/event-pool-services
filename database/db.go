@@ -15,9 +15,14 @@ import (
 )
 
 type DB struct {
-	gorm *gorm.DB
-	// Add your custom database interfaces here
-	// Example: UserDB UserDB
+	gorm        *gorm.DB
+	Languages   LanguagesDB
+	Category    CategoryDB
+	Ecosystem   EcosystemDB
+	EventPeriod EventPeriodDB
+	TeamGroup   TeamGroupDB
+	Event       EventDB
+	SubEvent    SubEventDB
 }
 
 func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
@@ -50,9 +55,14 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 	}
 
 	db := &DB{
-		gorm: gorms,
-		// Initialize your custom database interfaces here
-		// Example: UserDB: NewUserDB(gorms),
+		gorm:        gorms,
+		Languages:   NewLanguagesDB(gorms),
+		Category:    NewCategoryDB(gorms),
+		Ecosystem:   NewEcosystemDB(gorms),
+		EventPeriod: NewEventPeriodDB(gorms),
+		TeamGroup:   NewTeamGroupDB(gorms),
+		Event:       NewEventDB(gorms),
+		SubEvent:    NewSubEventDB(gorms),
 	}
 	return db, nil
 }
@@ -60,9 +70,14 @@ func NewDB(ctx context.Context, dbConfig config.DBConfig) (*DB, error) {
 func (db *DB) Transaction(fn func(db *DB) error) error {
 	return db.gorm.Transaction(func(tx *gorm.DB) error {
 		txDB := &DB{
-			gorm: tx,
-			// Initialize transaction-scoped database interfaces
-			// Example: UserDB: NewUserDB(tx),
+			gorm:        tx,
+			Languages:   NewLanguagesDB(tx),
+			Category:    NewCategoryDB(tx),
+			Ecosystem:   NewEcosystemDB(tx),
+			EventPeriod: NewEventPeriodDB(tx),
+			TeamGroup:   NewTeamGroupDB(tx),
+			Event:       NewEventDB(tx),
+			SubEvent:    NewSubEventDB(tx),
 		}
 		return fn(txDB)
 	})

@@ -17,6 +17,7 @@ import (
 	"github.com/multimarket-labs/event-pod-services/common/httputil"
 	"github.com/multimarket-labs/event-pod-services/config"
 	"github.com/multimarket-labs/event-pod-services/crawler"
+	"github.com/multimarket-labs/event-pod-services/crawler/sports"
 	"github.com/multimarket-labs/event-pod-services/database"
 	"github.com/multimarket-labs/event-pod-services/metrics"
 )
@@ -30,7 +31,6 @@ type EventPool struct {
 	wsServer         *httputil.HTTPServer
 	shutdown         context.CancelCauseFunc
 	stopped          atomic.Bool
-	chainIdList      []uint64
 }
 
 type RpcServerConfig struct {
@@ -106,7 +106,7 @@ func (as *EventPool) initFromConfig(ctx context.Context, cfg *config.Config) err
 		return fmt.Errorf("failed to start web socket server: %w", err)
 	}
 
-	if err := as.initWorker(cfg); err != nil {
+	if err := as.initWorker(cfg, as.shutdown); err != nil {
 		return fmt.Errorf("failed to init crawler processor: %w", err)
 	}
 
@@ -142,16 +142,51 @@ func (as *EventPool) initDB(ctx context.Context, cfg config.DBConfig) error {
 	return nil
 }
 
-func (as *EventPool) initWorker(config *config.Config) error {
-	var chainIds []string
-	for i := range config.RPCs {
-		chainIds = append(chainIds, strconv.Itoa(int(config.RPCs[i].ChainId)))
+func (as *EventPool) initWorker(config *config.Config, shutdown context.CancelCauseFunc) error {
+	allLanguages, err := as.DB.Languages.QueryAllLanguages()
+	if err != nil {
+		log.Warn("Failed to get language list, using default language", "err", err)
+		allLanguages = []database.Languages{}
 	}
+
+	var languages []string
+	var defaultLangGUID string
+	for _, lang := range allLanguages {
+		languages = append(languages, lang.LanguageName)
+		if lang.IsDefault || lang.LanguageName == "en" {
+			defaultLangGUID = lang.GUID
+		}
+	}
+	if len(languages) == 0 {
+		languages = []string{"en", "zh"}
+	}
+
+	// Dynamically get category and ecosystem GUIDs from database
+	sportCategory, err := as.DB.Category.GetCategoryByCode("SPORT")
+	if err != nil {
+		log.Warn("Failed to get sport category, NBA crawler may not work properly", "err", err)
+	}
+
+	nbaEcosystem, err := as.DB.Ecosystem.GetEcosystemByCode("NBA")
+	if err != nil {
+		log.Warn("Failed to get NBA ecosystem, NBA crawler may not work properly", "err", err)
+	}
+
+	nbaConfig := sports.NBACrawlerConfig{
+		AccessLevel:   config.Sportradar.AccessLevel,
+		ApiKey:        config.Sportradar.ApiKey,
+		LanguageCode:  languages,
+		CategoryGUID:  sportCategory.GUID,
+		EcosystemGUID: nbaEcosystem.GUID,
+		PeriodGUID:    "",
+		LanguageGUID:  defaultLangGUID,
+	}
+
 	wkConfig := &crawler.CrawlerConfig{
 		LoopInterval: time.Second * 5,
-		ChainIds:     chainIds,
+		NBAConfig:    nbaConfig,
 	}
-	workerHandle, err := crawler.NewCrawler(as.DB, wkConfig)
+	workerHandle, err := crawler.NewCrawler(as.DB, wkConfig, shutdown)
 	if err != nil {
 		return err
 	}

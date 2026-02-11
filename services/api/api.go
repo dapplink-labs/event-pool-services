@@ -82,40 +82,9 @@ func (a *API) initRouter(ctx context.Context, cfg *config.Config) {
 
 	v := new(validator.Validator)
 
-	emailService, err := common2.NewEmailService(&cfg.EmailConfig)
-	if err != nil {
-		log.Error("failed to create email service", "err", err)
-	}
-
 	authenticatorService := common2.NewAuthenticatorService("PHOENIX")
 
-	var kodoService *common2.KodoService
-	if cfg.KodoConfig.AccessKey != "" && cfg.KodoConfig.SecretKey != "" {
-		kodoService, err = common2.NewKodoService(&cfg.KodoConfig)
-		if err != nil {
-			log.Error("failed to create kodo service", "err", err)
-		} else {
-			log.Info("kodo service initialized successfully")
-		}
-	}
-
-	var s3Service *common2.S3Service
-	if cfg.S3Config.AccessKey != "" && cfg.S3Config.SecretKey != "" {
-		s3Service, err = common2.NewS3Service(&cfg.S3Config)
-		if err != nil {
-			log.Error("failed to create s3 service", "err", err)
-		} else {
-			log.Info("s3 service initialized successfully")
-		}
-	}
-
-	var minioService *common2.StorageService
-	if cfg.MinioConfig.Endpoint != "" {
-		minioService = common2.NewStorageService(cfg.MinioConfig)
-		log.Info("minio service initialized successfully")
-	}
-
-	svc := service.New(v, a.db, emailService, authenticatorService, kodoService, s3Service, minioService, cfg.JWTSecret, cfg.Domain)
+	svc := service.New(v, a.db, authenticatorService)
 	apiRouter := chi.NewRouter()
 
 	// Add all middlewares BEFORE registering routes

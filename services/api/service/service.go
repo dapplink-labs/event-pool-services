@@ -28,36 +28,18 @@ type Service interface {
 type HandlerSvc struct {
 	v                    *validator.Validator
 	db                   *database.DB
-	emailService         *common.EmailService
 	authenticatorService *common.AuthenticatorService
 	verificationManager  *common.VerificationCodeManager
-	siweVerifier         *common.SIWEVerifier
-	kodoService          *common.KodoService
-	s3Service            *common.S3Service
-	minioService         *common.StorageService
-	jwtSecret            string
 }
 
 func New(v *validator.Validator,
 	db *database.DB,
-	emailService *common.EmailService,
 	authenticatorService *common.AuthenticatorService,
-	kodoService *common.KodoService,
-	s3Service *common.S3Service,
-	minioService *common.StorageService,
-	jwtSecret string,
-	domain string,
 ) Service {
 	return &HandlerSvc{
 		v:                    v,
 		db:                   db,
-		emailService:         emailService,
 		authenticatorService: authenticatorService,
 		verificationManager:  common.NewVerificationCodeManager(),
-		kodoService:          kodoService,
-		s3Service:            s3Service,
-		minioService:         minioService,
-		siweVerifier:         common.NewSIWEVerifier(jwtSecret, domain),
-		jwtSecret:            jwtSecret,
 	}
 }

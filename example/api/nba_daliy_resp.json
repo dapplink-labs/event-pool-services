@@ -1,0 +1,264 @@
+{
+  "date": "2026-02-08",
+  "league": {
+    "id": "4353138d-4c22-4396-95d8-5f587d2df25c",
+    "name": "NBA",
+    "alias": "NBA"
+  },
+  "games": [
+    {
+      "id": "e034b4ee-9b2b-474d-b71f-f2337b6ccacf",
+      "status": "closed",
+      "coverage": "full",
+      "scheduled": "2026-02-08T17:30:00+00:00",
+      "home_points": 89,
+      "away_points": 111,
+      "track_on_court": true,
+      "sr_id": "sr:match:62924351",
+      "reference": "0022500757",
+      "time_zones": {
+        "venue": "US/Eastern",
+        "home": "US/Eastern",
+        "away": "US/Eastern"
+      },
+      "season": {
+        "id": "a7c6c8ee-c5ba-4a1a-abf5-723e1539f81b",
+        "year": 2025,
+        "type": "REG"
+      },
+      "venue": {
+        "id": "7d69b080-91ca-53c9-9302-45c1a72c5549",
+        "name": "TD Garden",
+        "capacity": 18624,
+        "address": "100 Legends Way",
+        "city": "Boston",
+        "state": "MA",
+        "zip": "02114",
+        "country": "USA",
+        "sr_id": "sr:venue:5940",
+        "location": {
+          "lat": "42.366303",
+          "lng": "-71.062228"
+        }
+      },
+      "broadcasts": [
+        {
+          "network": "ABC",
+          "type": "TV",
+          "locale": "National"
+        }
+      ],
+      "home": {
+        "name": "Boston Celtics",
+        "alias": "BOS",
+        "id": "583eccfa-fb46-11e1-82cb-f4ce4684ea4c",
+        "sr_id": "sr:team:3422",
+        "reference": "1610612738"
+      },
+      "away": {
+        "name": "New York Knicks",
+        "alias": "NYK",
+        "id": "583ec70e-fb46-11e1-82cb-f4ce4684ea4c",
+        "sr_id": "sr:team:3421",
+        "reference": "1610612752"
+      }
+    },
+    {
+      "id": "ed01f33e-a617-4440-824e-caa7f57100c1",
+      "status": "closed",
+      "coverage": "full",
+      "scheduled": "2026-02-08T19:00:00+00:00",
+      "home_points": 101,
+      "away_points": 132,
+      "track_on_court": true,
+      "sr_id": "sr:match:62926059",
+      "reference": "0022500758",
+      "time_zones": {
+        "venue": "US/Eastern",
+        "home": "US/Eastern",
+        "away": "US/Eastern"
+      },
+      "season": {
+        "id": "a7c6c8ee-c5ba-4a1a-abf5-723e1539f81b",
+        "year": 2025,
+        "type": "REG"
+      },
+      "venue": {
+        "id": "f62d5b49-d646-56e9-ba60-a875a00830f8",
+        "name": "Capital One Arena",
+        "capacity": 20356,
+        "address": "601 F Street NW",
+        "city": "Washington",
+        "state": "DC",
+        "zip": "20004",
+        "country": "USA",
+        "sr_id": "sr:venue:6016",
+        "location": {
+          "lat": "38.898056",
+          "lng": "-77.020833"
+        }
+      },
+      "broadcasts": [
+        {
+          "network": "FDSSUN",
+          "type": "TV",
+          "locale": "Away",
+          "channel": "653"
+        },
+        {
+          "network": "MNMT",
+          "type": "TV",
+          "locale": "Home",
+          "channel": "642"
+        }
+      ],
+      "home": {
+        "name": "Washington Wizards",
+        "alias": "WAS",
+        "id": "583ec8d4-fb46-11e1-82cb-f4ce4684ea4c",
+        "sr_id": "sr:team:3431",
+        "reference": "1610612764"
+      },
+      "away": {
+        "name": "Miami Heat",
+        "alias": "MIA",
+        "id": "583ecea6-fb46-11e1-82cb-f4ce4684ea4c",
+        "sr_id": "sr:team:3435",
+        "reference": "1610612748"
+      }
+    },
+    {
+      "id": "7e7ee1e3-8de3-46df-909c-cb521c869297",
+      "status": "closed",
+      "coverage": "full",
+      "scheduled": "2026-02-08T20:00:00+00:00",
+      "home_points": 122,
+      "away_points": 104,
+      "track_on_court": true,
+      "sr_id": "sr:match:62924657",
+      "reference": "0022500759",
+      "time_zones": {
+        "venue": "US/Eastern",
+        "home": "US/Eastern",
+        "away": "US/Eastern"
+      },
+      "season": {
+        "id": "a7c6c8ee-c5ba-4a1a-abf5-723e1539f81b",
+        "year": 2025,
+        "type": "REG"
+      },
+      "venue": {
+        "id": "62cc9661-7b13-56e7-bf4a-bba7ad7be8da",
+        "name": "Scotiabank Arena",
+        "capacity": 19800,
+        "address": "40 Bay Street",
+        "city": "Toronto",
+        "state": "ON",
+        "zip": "M5J 2X2",
+        "country": "CAN",
+        "sr_id": "sr:venue:6030",
+        "location": {
+          "lat": "43.643333",
+          "lng": "-79.379167"
+        }
+      },
+      "broadcasts": [
+        {
+          "network": "FDSIN",
+          "type": "TV",
+          "locale": "Away",
+          "channel": "671-4"
+        },
+        {
+          "network": "SportsNet",
+          "type": "TV",
+          "locale": "Home"
+        }
+      ],
+      "home": {
+        "name": "Toronto Raptors",
+        "alias": "TOR",
+        "id": "583ecda6-fb46-11e1-82cb-f4ce4684ea4c",
+        "sr_id": "sr:team:3433",
+        "reference": "1610612761"
+      },
+      "away": {
+        "name": "Indiana Pacers",
+        "alias": "IND",
+        "id": "583ec7cd-fb46-11e1-82cb-f4ce4684ea4c",
+        "sr_id": "sr:team:3419",
+        "reference": "1610612754"
+      }
+    },
+    {
+      "id": "bb653ff2-a110-462b-b876-cab2fda51aa9",
+      "status": "closed",
+      "coverage": "full",
+      "scheduled": "2026-02-08T20:00:00+00:00",
+      "home_points": 96,
+      "away_points": 115,
+      "track_on_court": true,
+      "sr_id": "sr:match:62925739",
+      "reference": "0022500760",
+      "time_zones": {
+        "venue": "US/Central",
+        "home": "US/Central",
+        "away": "US/Pacific"
+      },
+      "season": {
+        "id": "a7c6c8ee-c5ba-4a1a-abf5-723e1539f81b",
+        "year": 2025,
+        "type": "REG"
+      },
+      "venue": {
+        "id": "7aed802e-3562-5b73-af1b-3859529f9b95",
+        "name": "Target Center",
+        "capacity": 19356,
+        "address": "600 First Avenue North",
+        "city": "Minneapolis",
+        "state": "MN",
+        "zip": "55403",
+        "country": "USA",
+        "sr_id": "sr:venue:6930",
+        "location": {
+          "lat": "44.979444",
+          "lng": "-93.276111"
+        }
+      },
+      "broadcasts": [
+        {
+          "network": "ESPN",
+          "type": "TV",
+          "locale": "National",
+          "channel": "206"
+        },
+        {
+          "network": "FDSN",
+          "type": "TV",
+          "locale": "Home",
+          "channel": "668"
+        },
+        {
+          "network": "FDSSC",
+          "type": "TV",
+          "locale": "Away",
+          "channel": "693"
+        }
+      ],
+      "home": {
+        "name": "Minnesota Timberwolves",
+        "alias": "MIN",
+        "id": "583eca2f-fb46-11e1-82cb-f4ce4684ea4c",
+        "sr_id": "sr:team:3426",
+        "reference": "1610612750"
+      },
+      "away": {
+        "name": "LA Clippers",
+        "alias": "LAC",
+        "id": "583ecdfb-fb46-11e1-82cb-f4ce4684ea4c",
+        "sr_id": "sr:team:3425",
+        "reference": "1610612746"
+      }
+    }
+  ]
+}
