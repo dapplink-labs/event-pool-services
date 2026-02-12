@@ -183,6 +183,11 @@ func (as *EventPool) initWorker(config *config.Config, shutdown context.CancelCa
 		log.Warn("Failed to get Binance ecosystem, Binance crawler may not work properly", "err", err)
 	}
 
+	bybitEcosystem, err := as.DB.Ecosystem.GetEcosystemByCode("BYBIT")
+	if err != nil {
+		log.Warn("Failed to get Bybit ecosystem, Bybit crawler may not work properly", "err", err)
+	}
+
 	nbaConfig := sports.NBACrawlerConfig{
 		AccessLevel:   config.Sportradar.AccessLevel,
 		ApiKey:        config.Sportradar.ApiKey,
@@ -203,10 +208,20 @@ func (as *EventPool) initWorker(config *config.Config, shutdown context.CancelCa
 		WsUrl:         config.Binance.WsUrl,
 	}
 
+	bybitConfig := crypto.BybitCrawlerConfig{
+		CategoryGUID:  cryptoCategory.GUID,
+		EcosystemGUID: bybitEcosystem.GUID,
+		PeriodGUID:    "",
+		LanguageGUID:  defaultLangGUID,
+		Symbols:       config.Bybit.Symbols,
+		WsUrl:         config.Bybit.WsUrl,
+	}
+
 	wkConfig := &crawler.CrawlerConfig{
 		LoopInterval:  time.Second * 5,
 		NBAConfig:     nbaConfig,
 		BinanceConfig: binanceConfig,
+		BybitConfig:   bybitConfig,
 	}
 	workerHandle, err := crawler.NewCrawler(as.DB, wkConfig, shutdown)
 	if err != nil {

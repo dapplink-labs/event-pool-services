@@ -6,8 +6,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"net/url"
-	"os"
 	"strings"
 	"sync"
 	"time"
@@ -203,7 +201,7 @@ func (c *BinanceCrawler) processPrice(priceData *BinanceTickerPrice) error {
 
 		now := time.Now()
 		dateCode := now.Format("2006-01-02")
-		periodCode := fmt.Sprintf("CRYPTO_%s", dateCode)
+		periodCode := fmt.Sprintf("CRYPTO_BINANCE__%s", dateCode)
 
 		eventPeriodGUID, err := c.ensureEventPeriod(txDB, periodCode, dateCode)
 		if err != nil {
@@ -398,31 +396,8 @@ func (c *BinanceCrawler) runWebSocketStream(ctx context.Context) {
 }
 
 func (c *BinanceCrawler) connectAndSubscribe(ctx context.Context) error {
-	var proxyURL *url.URL
-	proxyStr := os.Getenv("HTTPS_PROXY")
-	if proxyStr == "" {
-		proxyStr = os.Getenv("HTTP_PROXY")
-	}
-	if proxyStr == "" {
-		proxyStr = os.Getenv("https_proxy")
-	}
-	if proxyStr == "" {
-		proxyStr = os.Getenv("http_proxy")
-	}
-
-	if proxyStr != "" {
-		var err error
-		proxyURL, err = url.Parse(proxyStr)
-		if err != nil {
-			log.Warn("Failed to parse proxy URL, connecting without proxy", "proxy", proxyStr, "err", err)
-		} else {
-			log.Info("Binance WebSocket using proxy", "proxy", proxyStr)
-		}
-	}
-
 	dialer := websocket.Dialer{
 		HandshakeTimeout: 30 * time.Second,
-		Proxy:            http.ProxyURL(proxyURL),
 	}
 
 	streams := make([]string, len(c.symbols))

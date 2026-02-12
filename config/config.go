@@ -20,6 +20,7 @@ type Config struct {
 	CORSAllowedOrigins  string           `yaml:"cors_allowed_origins"`
 	Sportradar          SportradarConfig `yaml:"sportradar"`
 	Binance             BinanceConfig    `yaml:"binance"`
+	Bybit               BybitConfig      `yaml:"bybit"`
 }
 
 type DBConfig struct {
@@ -43,6 +44,11 @@ type SportradarConfig struct {
 type BinanceConfig struct {
 	Symbols []string `yaml:"symbols"`
 	ApiURL  string   `yaml:"api_url"`
+	WsUrl   string   `yaml:"ws_url"`
+}
+
+type BybitConfig struct {
+	Symbols []string `yaml:"symbols"`
 	WsUrl   string   `yaml:"ws_url"`
 }
 
