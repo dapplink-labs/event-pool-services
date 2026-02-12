@@ -224,14 +224,21 @@ func (s *InitService) initEcosystems(db *gorm.DB, categoryGUIDs map[string]strin
 		return nil, fmt.Errorf("sport category GUID not found")
 	}
 
+	cryptoCategoryGUID, ok := categoryGUIDs["CRYPTO"]
+	if !ok {
+		return nil, fmt.Errorf("crypto category GUID not found")
+	}
+
 	ecosystems := []struct {
 		code         string
 		name         string
 		categoryCode string
+		categoryGUID string
 		sortOrder    int
 	}{
-		{"NBA", "NBA", "SPORT", 1},
-		{"CBA", "CBA", "SPORT", 2},
+		{"NBA", "NBA", "SPORT", sportCategoryGUID, 1},
+		{"CBA", "CBA", "SPORT", sportCategoryGUID, 2},
+		{"BINANCE", "Binance", "CRYPTO", cryptoCategoryGUID, 1},
 	}
 
 	ecosystemGUIDs := make(map[string]string)
@@ -244,7 +251,7 @@ func (s *InitService) initEcosystems(db *gorm.DB, categoryGUIDs map[string]strin
 
 		if existing == nil {
 			newEcosystem := &database.Ecosystem{
-				CategoryGUID: sportCategoryGUID,
+				CategoryGUID: eco.categoryGUID,
 				EventNum:     "1",
 				Code:         eco.code,
 				SortOrder:    eco.sortOrder,
@@ -262,7 +269,7 @@ func (s *InitService) initEcosystems(db *gorm.DB, categoryGUIDs map[string]strin
 			ecosystemGUIDs[eco.code] = created.GUID
 			log.Info("Created ecosystem", "code", eco.code, "name", eco.name, "guid", created.GUID)
 		} else {
-			existing.CategoryGUID = sportCategoryGUID
+			existing.CategoryGUID = eco.categoryGUID
 			existing.SortOrder = eco.sortOrder
 			existing.IsActive = true
 			existing.Remark = fmt.Sprintf("Ecosystem: %s", eco.name)
@@ -297,6 +304,10 @@ func (s *InitService) initEcosystemLanguages(db *gorm.DB, ecosystemGUIDs map[str
 		"CBA": {
 			"en": {"CBA", "Chinese Basketball Association"},
 			"zh": {"CBA", "中国男子篮球职业联赛"},
+		},
+		"BINANCE": {
+			"en": {"Binance", "Binance Cryptocurrency Exchange"},
+			"zh": {"币安", "币安加密货币交易所"},
 		},
 	}
 

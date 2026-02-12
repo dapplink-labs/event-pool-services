@@ -7,21 +7,24 @@ import (
 	"time"
 
 	"github.com/ethereum/go-ethereum/log"
+	"github.com/multimarket-labs/event-pod-services/crawler/crypto"
 	"github.com/multimarket-labs/event-pod-services/crawler/sports"
 	"github.com/multimarket-labs/event-pod-services/database"
 )
 
 type CrawlerConfig struct {
-	LoopInterval time.Duration
-	NBAConfig    sports.NBACrawlerConfig
+	LoopInterval  time.Duration
+	NBAConfig     sports.NBACrawlerConfig
+	BinanceConfig crypto.BinanceCrawlerConfig
 }
 
 type Crawler struct {
-	db         *database.DB
-	wConf      *CrawlerConfig
-	nbaCrawler *sports.NBACrawler
-	stopCh     chan struct{}
-	tasks      tasks.Group
+	db             *database.DB
+	wConf          *CrawlerConfig
+	nbaCrawler     *sports.NBACrawler
+	binanceCrawler *crypto.BinanceCrawler
+	stopCh         chan struct{}
+	tasks          tasks.Group
 }
 
 func NewCrawler(db *database.DB, wConf *CrawlerConfig, shutdown context.CancelCauseFunc) (*Crawler, error) {
@@ -30,11 +33,17 @@ func NewCrawler(db *database.DB, wConf *CrawlerConfig, shutdown context.CancelCa
 		log.Warn("Failed to initialize NBA crawler, NBA sync will be skipped", "err", err)
 	}
 
+	binanceCrawler, err := crypto.NewBinanceCrawler(db, wConf.BinanceConfig)
+	if err != nil {
+		log.Warn("Failed to initialize Binance crawler, Binance sync will be skipped", "err", err)
+	}
+
 	return &Crawler{
-		db:         db,
-		wConf:      wConf,
-		nbaCrawler: nbaCrawler,
-		stopCh:     make(chan struct{}),
+		db:             db,
+		wConf:          wConf,
+		nbaCrawler:     nbaCrawler,
+		binanceCrawler: binanceCrawler,
+		stopCh:         make(chan struct{}),
 		tasks: tasks.Group{
 			HandleCrit: func(err error) {
 				shutdown(fmt.Errorf("critical error in worker handle processor: %w", err))
@@ -45,12 +54,16 @@ func NewCrawler(db *database.DB, wConf *CrawlerConfig, shutdown context.CancelCa
 
 func (sh *Crawler) Close() error {
 	close(sh.stopCh)
+	if sh.binanceCrawler != nil {
+		sh.binanceCrawler.StopWebSocketStream()
+	}
 	return nil
 }
 
 func (sh *Crawler) Start() error {
 
-	go sh.runNBASync()
+	//go sh.runNBASync()
+	go sh.runBinanceSync()
 
 	log.Info("Crawler service started")
 	return nil
@@ -91,5 +104,35 @@ func (sh *Crawler) syncNBADateRange(ctx context.Context) {
 
 	if err := sh.nbaCrawler.SyncDateRange(ctx, startDate, endDate); err != nil {
 		log.Error("Failed to sync NBA schedule range", "start", startDate, "end", endDate, "err", err)
+	}
+}
+
+func (sh *Crawler) runBinanceSync() {
+	ctx := context.Background()
+
+	if sh.binanceCrawler != nil {
+		if err := sh.binanceCrawler.StartWebSocketStream(ctx); err != nil {
+			log.Error("Failed to start Binance WebSocket stream, falling back to REST API", "err", err)
+			sh.syncBinancePrices(ctx)
+			workerTicker := time.NewTicker(30 * time.Second)
+			sh.tasks.Go(func() error {
+				for range workerTicker.C {
+					sh.syncBinancePrices(ctx)
+				}
+				return nil
+			})
+		} else {
+			log.Info("Binance WebSocket stream started for real-time price updates")
+		}
+	}
+}
+
+func (sh *Crawler) syncBinancePrices(ctx context.Context) {
+	if sh.binanceCrawler == nil {
+		return
+	}
+
+	if err := sh.binanceCrawler.SyncPrices(ctx); err != nil {
+		log.Error("Failed to sync Binance prices", "err", err)
 	}
 }

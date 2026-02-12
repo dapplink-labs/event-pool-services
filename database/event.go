@@ -40,6 +40,7 @@ type Event struct {
 	ExternalId           string    `gorm:"type:varchar(255);not null;default:'0'" json:"external_id"`
 	MainScore            string    `gorm:"type:numeric;not null;default:0" json:"main_score"`    // UINT256 mapped to string
 	ClusterScore         string    `gorm:"type:numeric;not null;default:0" json:"cluster_score"` // UINT256 mapped to string
+	Price                string    `gorm:"type:varchar(255);not null;default:'0'" json:"price"`  // Price for crypto/non-sports events
 	Logo                 string    `gorm:"type:varchar(500);not null" json:"logo"`
 	EventType            int16     `gorm:"type:smallint;not null;default:0;column:event_type" json:"event_type"` // Event type: 0=hot topic, 1=breaking, 2=latest
 	ExperimentResult     string    `gorm:"type:text;not null;default:''" json:"experiment_result"`

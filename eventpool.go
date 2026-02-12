@@ -17,6 +17,7 @@ import (
 	"github.com/multimarket-labs/event-pod-services/common/httputil"
 	"github.com/multimarket-labs/event-pod-services/config"
 	"github.com/multimarket-labs/event-pod-services/crawler"
+	"github.com/multimarket-labs/event-pod-services/crawler/crypto"
 	"github.com/multimarket-labs/event-pod-services/crawler/sports"
 	"github.com/multimarket-labs/event-pod-services/database"
 	"github.com/multimarket-labs/event-pod-services/metrics"
@@ -167,9 +168,19 @@ func (as *EventPool) initWorker(config *config.Config, shutdown context.CancelCa
 		log.Warn("Failed to get sport category, NBA crawler may not work properly", "err", err)
 	}
 
+	cryptoCategory, err := as.DB.Category.GetCategoryByCode("CRYPTO")
+	if err != nil {
+		log.Warn("Failed to get crypto category, Binance crawler may not work properly", "err", err)
+	}
+
 	nbaEcosystem, err := as.DB.Ecosystem.GetEcosystemByCode("NBA")
 	if err != nil {
 		log.Warn("Failed to get NBA ecosystem, NBA crawler may not work properly", "err", err)
+	}
+
+	binanceEcosystem, err := as.DB.Ecosystem.GetEcosystemByCode("BINANCE")
+	if err != nil {
+		log.Warn("Failed to get Binance ecosystem, Binance crawler may not work properly", "err", err)
 	}
 
 	nbaConfig := sports.NBACrawlerConfig{
@@ -182,9 +193,20 @@ func (as *EventPool) initWorker(config *config.Config, shutdown context.CancelCa
 		LanguageGUID:  defaultLangGUID,
 	}
 
+	binanceConfig := crypto.BinanceCrawlerConfig{
+		CategoryGUID:  cryptoCategory.GUID,
+		EcosystemGUID: binanceEcosystem.GUID,
+		PeriodGUID:    "",
+		LanguageGUID:  defaultLangGUID,
+		Symbols:       config.Binance.Symbols,
+		ApiUrl:        config.Binance.ApiURL,
+		WsUrl:         config.Binance.WsUrl,
+	}
+
 	wkConfig := &crawler.CrawlerConfig{
-		LoopInterval: time.Second * 5,
-		NBAConfig:    nbaConfig,
+		LoopInterval:  time.Second * 5,
+		NBAConfig:     nbaConfig,
+		BinanceConfig: binanceConfig,
 	}
 	workerHandle, err := crawler.NewCrawler(as.DB, wkConfig, shutdown)
 	if err != nil {

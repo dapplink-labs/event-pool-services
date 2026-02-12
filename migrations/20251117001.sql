@@ -155,6 +155,7 @@ CREATE TABLE IF NOT EXISTS event (
     external_id              VARCHAR(255) NOT NULL DEFAULT '0',
     main_score               UINT256 NOT NULL DEFAULT 0,         -- 主队得分
     cluster_score            UINT256 NOT NULL DEFAULT 0,         -- 客队得分
+    price                    VARCHAR(255) NOT NULL DEFAULT '0',  -- 价格（用于加密货币等非体育事件）
     logo                     VARCHAR(500) NOT NULL,              -- 事件图标 URL
     event_type               SMALLINT NOT NULL DEFAULT 0,        -- 排序类型：0=热门话题, 1=突发, 2=最新
     experiment_result        TEXT NOT NULL DEFAULT '',           -- 实验结果/事件结果

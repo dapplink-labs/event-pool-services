@@ -19,6 +19,7 @@ type Config struct {
 	ElasticsearchConfig ESConfig         `yaml:"elasticsearch_config"`
 	CORSAllowedOrigins  string           `yaml:"cors_allowed_origins"`
 	Sportradar          SportradarConfig `yaml:"sportradar"`
+	Binance             BinanceConfig    `yaml:"binance"`
 }
 
 type DBConfig struct {
@@ -37,6 +38,12 @@ type ServerConfig struct {
 type SportradarConfig struct {
 	AccessLevel string `yaml:"access_level"`
 	ApiKey      string `yaml:"api_key"`
+}
+
+type BinanceConfig struct {
+	Symbols []string `yaml:"symbols"`
+	ApiURL  string   `yaml:"api_url"`
+	WsUrl   string   `yaml:"ws_url"`
 }
 
 type ESConfig struct {
