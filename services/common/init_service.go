@@ -240,6 +240,7 @@ func (s *InitService) initEcosystems(db *gorm.DB, categoryGUIDs map[string]strin
 		{"CBA", "CBA", "SPORT", sportCategoryGUID, 2},
 		{"BINANCE", "Binance", "CRYPTO", cryptoCategoryGUID, 1},
 		{"BYBIT", "Bybit", "CRYPTO", cryptoCategoryGUID, 2},
+		{"OKX", "OKX", "CRYPTO", cryptoCategoryGUID, 3},
 	}
 
 	ecosystemGUIDs := make(map[string]string)

@@ -3,8 +3,9 @@ package crawler
 import (
 	"context"
 	"fmt"
-	"github.com/multimarket-labs/event-pod-services/common/tasks"
 	"time"
+
+	"github.com/multimarket-labs/event-pod-services/common/tasks"
 
 	"github.com/ethereum/go-ethereum/log"
 	"github.com/multimarket-labs/event-pod-services/crawler/crypto"
@@ -17,6 +18,7 @@ type CrawlerConfig struct {
 	NBAConfig     sports.NBACrawlerConfig
 	BinanceConfig crypto.BinanceCrawlerConfig
 	BybitConfig   crypto.BybitCrawlerConfig
+	OKXConfig     crypto.OKXCrawlerConfig
 }
 
 type Crawler struct {
@@ -25,6 +27,7 @@ type Crawler struct {
 	nbaCrawler     *sports.NBACrawler
 	binanceCrawler *crypto.BinanceCrawler
 	bybitCrawler   *crypto.BybitCrawler
+	okxCrawler     *crypto.OKXCrawler
 	stopCh         chan struct{}
 	tasks          tasks.Group
 }
@@ -45,12 +48,18 @@ func NewCrawler(db *database.DB, wConf *CrawlerConfig, shutdown context.CancelCa
 		log.Warn("Failed to initialize Bybit crawler, Bybit sync will be skipped", "err", err)
 	}
 
+	okxCrawler, err := crypto.NewOKXCrawler(db, wConf.OKXConfig)
+	if err != nil {
+		log.Warn("Failed to initialize OKX crawler, OKX sync will be skipped", "err", err)
+	}
+
 	return &Crawler{
 		db:             db,
 		wConf:          wConf,
 		nbaCrawler:     nbaCrawler,
 		binanceCrawler: binanceCrawler,
 		bybitCrawler:   bybitCrawler,
+		okxCrawler:     okxCrawler,
 		stopCh:         make(chan struct{}),
 		tasks: tasks.Group{
 			HandleCrit: func(err error) {
@@ -68,14 +77,18 @@ func (sh *Crawler) Close() error {
 	if sh.bybitCrawler != nil {
 		sh.bybitCrawler.StopWebSocketStream()
 	}
+	if sh.okxCrawler != nil {
+		sh.okxCrawler.StopWebSocketStream()
+	}
 	return nil
 }
 
 func (sh *Crawler) Start() error {
 
-	go sh.runNBASync()
-	go sh.runBinanceSync()
-	go sh.runBybitSync()
+	//go sh.runNBASync()
+	//go sh.runBinanceSync()
+	//go sh.runBybitSync()
+	go sh.runOKXSync()
 
 	log.Info("Crawler service started")
 	return nil
@@ -157,6 +170,18 @@ func (sh *Crawler) runBybitSync() {
 			log.Error("Failed to start Bybit WebSocket stream", "err", err)
 		} else {
 			log.Info("Bybit WebSocket stream started for real-time price updates")
+		}
+	}
+}
+
+func (sh *Crawler) runOKXSync() {
+	ctx := context.Background()
+
+	if sh.okxCrawler != nil {
+		if err := sh.okxCrawler.StartWebSocketStream(ctx); err != nil {
+			log.Error("Failed to start OKX WebSocket stream", "err", err)
+		} else {
+			log.Info("OKX WebSocket stream started for real-time price updates")
 		}
 	}
 }

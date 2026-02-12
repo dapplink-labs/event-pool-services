@@ -2,9 +2,10 @@ package config
 
 import (
 	"fmt"
-	yaml "gopkg.in/yaml.v2"
 	"os"
 	"reflect"
+
+	yaml "gopkg.in/yaml.v2"
 )
 
 type Config struct {
@@ -21,6 +22,7 @@ type Config struct {
 	Sportradar          SportradarConfig `yaml:"sportradar"`
 	Binance             BinanceConfig    `yaml:"binance"`
 	Bybit               BybitConfig      `yaml:"bybit"`
+	OKX                 OKXConfig        `yaml:"okx"`
 }
 
 type DBConfig struct {
@@ -48,6 +50,11 @@ type BinanceConfig struct {
 }
 
 type BybitConfig struct {
+	Symbols []string `yaml:"symbols"`
+	WsUrl   string   `yaml:"ws_url"`
+}
+
+type OKXConfig struct {
 	Symbols []string `yaml:"symbols"`
 	WsUrl   string   `yaml:"ws_url"`
 }

@@ -188,6 +188,11 @@ func (as *EventPool) initWorker(config *config.Config, shutdown context.CancelCa
 		log.Warn("Failed to get Bybit ecosystem, Bybit crawler may not work properly", "err", err)
 	}
 
+	okxEcosystem, err := as.DB.Ecosystem.GetEcosystemByCode("OKX")
+	if err != nil {
+		log.Warn("Failed to get OKX ecosystem, OKX crawler may not work properly", "err", err)
+	}
+
 	nbaConfig := sports.NBACrawlerConfig{
 		AccessLevel:   config.Sportradar.AccessLevel,
 		ApiKey:        config.Sportradar.ApiKey,
@@ -217,11 +222,21 @@ func (as *EventPool) initWorker(config *config.Config, shutdown context.CancelCa
 		WsUrl:         config.Bybit.WsUrl,
 	}
 
+	okxConfig := crypto.OKXCrawlerConfig{
+		CategoryGUID:  cryptoCategory.GUID,
+		EcosystemGUID: okxEcosystem.GUID,
+		PeriodGUID:    "",
+		LanguageGUID:  defaultLangGUID,
+		Symbols:       config.OKX.Symbols,
+		WsUrl:         config.OKX.WsUrl,
+	}
+
 	wkConfig := &crawler.CrawlerConfig{
 		LoopInterval:  time.Second * 5,
 		NBAConfig:     nbaConfig,
 		BinanceConfig: binanceConfig,
 		BybitConfig:   bybitConfig,
+		OKXConfig:     okxConfig,
 	}
 	workerHandle, err := crawler.NewCrawler(as.DB, wkConfig, shutdown)
 	if err != nil {
